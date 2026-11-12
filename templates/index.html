@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+{% import "_art.html" as art %}
+{% block title %}{{ EVENT.parents }} — Baby Shower · {{ EVENT.date_short }}{% endblock %}
+
+{% block content %}
+
+<!-- ============================ HERO ============================ -->
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <p class="eyebrow">A Hundred Acre Wood Baby Shower</p>
+      <h1>{{ EVENT.parents.split('&')[0].strip() }} <span class="amp">&amp;</span> {{ EVENT.parents.split('&')[1].strip() if '&' in EVENT.parents else '' }}</h1>
+      <p class="tag">{{ EVENT.tagline }}</p>
+      <p class="muted" style="max-width:44ch">
+        Somewhere between the honey pots and the heffalump traps, a very small someone
+        is getting ready to arrive. Come help us celebrate {{ EVENT.baby_surname }}
+        before the adventure begins.
+      </p>
+      <div class="btn-row" style="margin-top:1.4rem">
+        <a class="btn btn-primary" href="{{ url_for('album') }}">View the photo album</a>
+        <a class="btn btn-ghost" href="{{ url_for('upload_page') }}">Add your photos</a>
+      </div>
+      <p class="small muted" style="margin-top:1.1rem">
+        <strong>{{ EVENT.date_long }}</strong> · {{ EVENT.time|ph }} · {{ EVENT.venue|ph }}
+      </p>
+    </div>
+
+    <div class="hero-art">
+      <svg viewBox="0 0 520 520" role="img" aria-label="Illustration of a Pooh-style bear holding a hunny pot, with balloons and bees">
+        <defs>
+          <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#FFF9E7"/><stop offset="1" stop-color="#EFF6EA"/>
+          </linearGradient>
+        </defs>
+        <rect x="10" y="10" width="500" height="500" rx="44" fill="url(#sky)"/>
+
+        <!-- sun & clouds -->
+        <g transform="translate(300 46) scale(0.85)">{{ art.clouds() }}</g>
+        <g transform="translate(120 30) scale(0.6)" opacity=".6">{{ art.clouds() }}</g>
+
+        <!-- balloons (top right) -->
+        <g class="floating">
+          {{ art.balloon(346, 112, '#F3C9C3', 52) }}
+          {{ art.balloon(390, 84, '#BFD6B2', 74) }}
+          {{ art.balloon(434, 118, '#FBE7A8', 40) }}
+        </g>
+
+        <!-- bees -->
+        <g class="floating" style="animation-delay:-2s">
+          {{ art.bee(250, 148, 1.15) }}
+          {{ art.bee(470, 214, 1.0) }}
+          {{ art.bee(104, 262, 0.9) }}
+          {{ art.bee(300, 330, 1.05) }}
+        </g>
+
+        <!-- trees -->
+        {{ art.tree(56, 470, 1.25) }}
+        {{ art.tree(474, 480, 1.35, true) }}
+
+        <!-- ground -->
+        <path d="M10 448 q120 -26 250 -6 q130 22 250 -6 v34 a44 44 0 0 1 -44 44 H54 a44 44 0 0 1 -44 -44 z" fill="#E4EEDF"/>
+        <path d="M34 462 q120 -18 230 -2 q110 16 226 -6" fill="none" stroke="#C9DDBC" stroke-width="3"
+              stroke-dasharray="1 13" stroke-linecap="round"/>
+        <!-- little flowers on the hill -->
+        {% for fx, fy, fc in [(90, 466, '#F3C9C3'), (128, 474, '#FBE7A8'), (330, 470, '#F3C9C3'), (368, 462, '#DCE9D2'), (300, 478, '#FBE7A8')] %}
+        <g transform="translate({{ fx }} {{ fy }})">
+          <path d="M0 0 v-9" stroke="#9DBE92" stroke-width="1.6"/>
+          <circle cx="0" cy="-11" r="3.4" fill="{{ fc }}"/>
+          <circle cx="0" cy="-11" r="1.2" fill="#F5E6B8"/>
+        </g>
+        {% endfor %}
+
+        <!-- the bear -->
+        <g transform="translate(158 212)">
+          <g class="floating" style="animation-delay:-1s">
+            <svg viewBox="0 0 220 240" width="266" height="290" overflow="visible">{{ art.pooh() }}</svg>
+          </g>
+        </g>
+
+        <!-- a small friend -->
+        <g transform="translate(352 396)">
+          <g class="floating" style="animation-delay:-3.5s">
+            <svg viewBox="0 0 120 110" width="104" height="96" overflow="visible">{{ art.piglet() }}</svg>
+          </g>
+        </g>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ DETAILS ============================ -->
+<section class="section" id="details">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">The important bits</p>
+      <h2>You're invited</h2>
+      <p>Everything you need to find us, feed us, and celebrate the bump.</p>
+    </div>
+
+    <div class="grid g2">
+      <div class="card">
+        <h3 style="margin-bottom:1.1rem">When &amp; where</h3>
+        <ul class="dl">
+          <li>
+            <span class="ic" aria-hidden="true">🗓️</span>
+            <span><span class="k">Date</span><span class="v"><b>{{ EVENT.date_long }}</b></span></span>
+          </li>
+          <li>
+            <span class="ic" aria-hidden="true">🕰️</span>
+            <span><span class="k">Time</span><span class="v">{{ EVENT.time|ph }}</span></span>
+          </li>
+          <li>
+            <span class="ic" aria-hidden="true">📍</span>
+            <span><span class="k">Venue</span>
+              <span class="v"><b>{{ EVENT.venue|ph }}</b><br>{{ EVENT.address|ph }}
+              {% if EVENT.map_url %}<br><a href="{{ EVENT.map_url }}" target="_blank" rel="noopener">Open in maps →</a>{% endif %}
+              </span>
+            </span>
+          </li>
+          <li>
+            <span class="ic" aria-hidden="true">🎀</span>
+            <span><span class="k">Theme</span><span class="v">{{ EVENT.theme }}</span></span>
+          </li>
+          {% if EVENT.dress_code %}
+          <li>
+            <span class="ic" aria-hidden="true">👗</span>
+            <span><span class="k">Dress code</span><span class="v">{{ EVENT.dress_code|ph }}</span></span>
+          </li>
+          {% endif %}
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-bottom:1.1rem">RSVP &amp; hosts</h3>
+        <ul class="dl">
+          <li>
+            <span class="ic" aria-hidden="true">✉️</span>
+            <span><span class="k">Kindly reply to</span><span class="v"><b>{{ EVENT.rsvp|ph }}</b></span></span>
+          </li>
+          <li>
+            <span class="ic" aria-hidden="true">📅</span>
+            <span><span class="k">RSVP by</span><span class="v">{{ EVENT.rsvp_by|ph }}</span></span>
+          </li>
+          <li>
+            <span class="ic" aria-hidden="true">🤍</span>
+            <span><span class="k">Hosted by</span><span class="v">{{ EVENT.hosts|ph }}</span></span>
+          </li>
+          <li>
+            <span class="ic" aria-hidden="true">🎁</span>
+            <span><span class="k">Gifts</span><span class="v">{{ EVENT.registry_note }}
+              {% if EVENT.registry_url %}<br><a href="{{ EVENT.registry_url }}" target="_blank" rel="noopener">See the gift list →</a>{% endif %}
+            </span></span>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ PHOTO / QR ============================ -->
+<section class="section tint">
+  <div class="wrap">
+    <div class="card" style="display:grid;grid-template-columns:1fr auto;gap:clamp(1.4rem,3vw,2.6rem);align-items:center">
+      <div>
+        <p class="eyebrow">The memory album</p>
+        <h2 style="margin-bottom:.4rem">Snap it. Scan it. Share it.</h2>
+        <p class="muted" style="max-width:52ch">
+          We're putting together a photo album of the day, and every guest is the photographer.
+          Take pictures on your phone, then scan the code to add them — the hosts approve
+          each one before it lands in the album, so nothing sneaks in half-eaten cake shots.
+          (Okay, maybe one.)
+        </p>
+        <div class="btn-row" style="margin-top:1.2rem">
+          <a class="btn btn-primary" href="{{ url_for('upload_page') }}">Upload your photos</a>
+          <a class="btn btn-ghost" href="{{ url_for('album') }}">Browse the album</a>
+        </div>
+      </div>
+      <div style="text-align:center">
+        <div style="background:#fff;padding:14px;border-radius:22px;box-shadow:var(--shadow);display:inline-block">
+          <img src="{{ url_for('qr_svg') }}" alt="QR code linking to the photo upload page" width="190" height="190" style="width:190px;height:190px">
+        </div>
+        <p class="small muted" style="margin:.7rem 0 0">Point your camera here</p>
+      </div>
+    </div>
+    <p class="small muted center" style="margin-top:1rem">
+      The QR opens <span class="script">{{ url_for('upload_page') }}</span> — it always follows wherever this site is hosted.
+    </p>
+  </div>
+</section>
+
+<!-- ============================ STORY / EXTRAS ============================ -->
+<section class="section">
+  <div class="wrap">
+    <div class="divider" aria-hidden="true">{{ art.hunny() }}</div>
+    <div class="grid g3" style="margin-top:2.4rem">
+      <div class="card">
+        <h3>Come as you are</h3>
+        <p class="muted" style="margin-bottom:0">No games you have to win, no speeches you have to make.
+          Just good food, better company, and a bump that will be very pleased to meet you.</p>
+      </div>
+      <div class="card">
+        <h3>Bring a book</h3>
+        <p class="muted" style="margin-bottom:0">Instead of a card, write a note inside a children's book for
+          {{ EVENT.baby_surname }}'s shelf — we'll read them all for years to come.</p>
+      </div>
+      <div class="card">
+        <h3>One small favour</h3>
+        <p class="muted" style="margin-bottom:0">Pop your phone on silent, take lots of photos, and
+          add them to the album before you leave. Future them will thank you.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

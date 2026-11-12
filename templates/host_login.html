@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% import "_art.html" as art %}
+{% block title %}Host sign-in — {{ EVENT.parents }}'s Baby Shower{% endblock %}
+
+{% block content %}
+<section class="section">
+  <div class="narrow" style="max-width:460px">
+    <div class="card">
+      <div style="text-align:center;margin-bottom:1.2rem">
+        <svg viewBox="0 0 220 240" style="width:112px;margin:0 auto" aria-hidden="true">{{ art.pooh() }}</svg>
+        <p class="eyebrow" style="margin-top:.6rem">Hosts only</p>
+        <h2 style="margin-bottom:.3rem">The host desk</h2>
+        <p class="muted small">Approve or decline photos before they appear in the album.</p>
+      </div>
+
+      {% if error %}<div class="note warn" style="margin-bottom:1rem">{{ error }}</div>{% endif %}
+
+      <form method="post" action="{{ url_for('host') }}">
+        <div class="field">
+          <label for="pin">Host PIN</label>
+          <input type="password" id="pin" name="pin" inputmode="text" autocomplete="current-password"
+                 autofocus required placeholder="••••••••">
+        </div>
+        <button class="btn btn-sage" type="submit" style="width:100%">Unlock</button>
+      </form>
+      <p class="small muted center" style="margin:1rem 0 0">
+        Lost the PIN? It's set in <code>config.py</code> as <code>HOST_PIN</code>.
+      </p>
+    </div>
+  </div>
+</section>
+{% endblock %}

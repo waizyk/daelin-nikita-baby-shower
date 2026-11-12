@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+{% import "_art.html" as art %}
+{% block title %}Add Your Photos — {{ EVENT.parents }}'s Baby Shower{% endblock %}
+
+{% block content %}
+<section class="section" style="padding-top:clamp(2rem,4vw,3rem)">
+  <div class="narrow">
+
+    <div class="section-head">
+      <p class="eyebrow">Guest uploads</p>
+      <h2>Add your photos</h2>
+      <p>Thank you for being part of {{ EVENT.parents }}'s day. Pop your pictures in below —
+        a host will approve them and they'll appear in the album.</p>
+    </div>
+
+    <div class="card">
+      <div class="drop" id="drop" tabindex="0" role="button"
+           aria-label="Choose photos or drag and drop them here">
+        <svg viewBox="0 0 64 64" aria-hidden="true">
+          <rect x="4" y="14" width="56" height="40" rx="10" fill="#E4EEDF" stroke="#8FAE86" stroke-width="2.5"/>
+          <circle cx="32" cy="34" r="11" fill="#FFFCF4" stroke="#8FAE86" stroke-width="2.5"/>
+          <circle cx="32" cy="34" r="5" fill="#E8B04B"/>
+          <rect x="22" y="8" width="20" height="9" rx="4" fill="#FDF3D6" stroke="#8FAE86" stroke-width="2.5"/>
+        </svg>
+        <p style="margin:0 0 .2rem"><strong>Tap to choose photos</strong> — or drag them here</p>
+        <p class="small muted" style="margin:0">JPEG, PNG, WebP or iPhone HEIC · up to {{ max_photos }} at a time</p>
+      </div>
+      <input type="file" id="fileInput" accept="image/*" multiple hidden>
+
+      <div class="strip" id="strip"></div>
+
+      <form id="form" style="margin-top:1.3rem" novalidate>
+        <div class="field">
+          <label for="guest">Your name <span class="muted">(or leave it and we'll call you Anonymous Pooh)</span></label>
+          <input type="text" id="guest" name="guest" maxlength="60" placeholder="e.g. Thandi Mkhize" autocomplete="name">
+        </div>
+        <div class="field">
+          <label for="message">A message for {{ EVENT.parents }} <span class="muted">(optional)</span></label>
+          <textarea id="message" name="message" maxlength="300" placeholder="Congratulations! Here's to a lifetime of honey and adventures…"></textarea>
+        </div>
+        <div class="progress" id="progress"><i></i></div>
+        <div class="btn-row" style="margin-top:1rem">
+          <button class="btn btn-primary" type="submit" id="submitBtn" disabled>Upload photos</button>
+          <a class="btn btn-ghost" href="{{ url_for('album') }}">Back to the album</a>
+        </div>
+      </form>
+
+      <div id="result"></div>
+    </div>
+
+    <div class="note" style="margin-top:1.4rem">
+      <strong>Wifi playing up?</strong> You can also send your photos straight to the shared Google Drive folder —
+      <a href="{{ drive_url }}" target="_blank" rel="noopener">open the folder here</a>. Everything in Drive gets
+      pulled into the album by the hosts anyway.
+    </div>
+
+    <p class="small muted center" style="margin-top:1.2rem">
+      Photos stay private until a host approves them. Only approved pictures show in the public album.
+    </p>
+
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  const drop = document.getElementById('drop');
+  const input = document.getElementById('fileInput');
+  const strip = document.getElementById('strip');
+  const form = document.getElementById('form');
+  const btn = document.getElementById('submitBtn');
+  const progress = document.getElementById('progress');
+  const progressBar = progress.querySelector('i');
+  const result = document.getElementById('result');
+  const MAX = {{ max_photos }};
+  let files = [];
+
+  if (!window.FormData || !window.fetch) return;
+
+  function render() {
+    strip.innerHTML = '';
+    files.forEach((f, i) => {
+      const d = document.createElement('div');
+      d.className = 'thumb';
+      const img = document.createElement('img');
+      img.src = URL.createObjectURL(f);
+      img.alt = f.name;
+      const x = document.createElement('button');
+      x.className = 'x'; x.type = 'button'; x.textContent = '×';
+      x.setAttribute('aria-label', 'Remove ' + f.name);
+      x.onclick = () => { files.splice(i, 1); render(); };
+      d.append(img, x);
+      strip.append(d);
+    });
+    btn.disabled = files.length === 0;
+    btn.textContent = files.length ? `Upload ${files.length} photo${files.length > 1 ? 's' : ''}` : 'Upload photos';
+  }
+
+  function addFiles(list) {
+    const incoming = [...list].filter(f => f.type.startsWith('image/') || /\.(heic|heif)$/i.test(f.name));
+    const room = MAX - files.length;
+    if (incoming.length > room) {
+      window.toast(`You can add ${MAX} photos per batch — keeping the first ${room}.`);
+    }
+    files = files.concat(incoming.slice(0, Math.max(room, 0)));
+    render();
+  }
+
+  drop.addEventListener('click', () => input.click());
+  drop.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); input.click(); }
+  });
+  input.addEventListener('change', () => { addFiles(input.files); input.value = ''; });
+
+  ['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => {
+    e.preventDefault(); drop.classList.add('hot');
+  }));
+  ['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => {
+    e.preventDefault(); drop.classList.remove('hot');
+  }));
+  drop.addEventListener('drop', e => { if (e.dataTransfer) addFiles(e.dataTransfer.files); });
+
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    if (!files.length) return;
+    btn.disabled = true;
+    result.innerHTML = '';
+    progress.classList.add('on');
+    progressBar.style.width = '8%';
+
+    try {
+      const tr = await fetch('/api/token', { method: 'POST' });
+      const { token } = await tr.json();
+
+      const fd = new FormData();
+      fd.append('token', token);
+      fd.append('guest', document.getElementById('guest').value);
+      fd.append('message', document.getElementById('message').value);
+      files.forEach(f => fd.append('photos', f, f.name));
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', '/api/upload');
+      xhr.upload.onprogress = ev => {
+        if (ev.lengthComputable) {
+          progressBar.style.width = Math.max(8, Math.round(ev.loaded / ev.total * 95)) + '%';
+        }
+      };
+      xhr.onload = () => {
+        progressBar.style.width = '100%';
+        let data = {};
+        try { data = JSON.parse(xhr.responseText); } catch (_) {}
+        if (xhr.status === 200 && data.ok) {
+          const n = data.count;
+          const pendingMsg = data.status === 'pending'
+            ? 'A host will approve them shortly — then they\'ll show up in the album.'
+            : 'They\'re already in the album!';
+          const nextMsg = data.status === 'pending'
+            ? 'Taking you to the album… you can also add more photos.'
+            : 'Taking you to the album…';
+          result.innerHTML = `<div class="note ok" style="margin-top:1rem">
+            <strong>Thank you! 🍯 ${n} photo${n === 1 ? '' : 's'} received.</strong><br>${pendingMsg}
+            <br><span class="small">${nextMsg}</span>
+            ${data.failed ? `<br><span class="small">${data.failed} file(s) couldn't be read and were skipped.</span>` : ''}
+          </div>`;
+          files = []; render();
+          document.getElementById('message').value = '';
+          window.toast('Photos uploaded — thank you!');
+          setTimeout(() => { window.location.href = '{{ url_for("album") }}'; }, 4200);
+        } else {
+          throw new Error(data.error || 'Upload failed — please try again.');
+        }
+      };
+      xhr.onerror = () => { throw new Error('Network error — please check your connection.'); };
+      xhr.send(fd);
+    } catch (err) {
+      progress.classList.remove('on');
+      result.innerHTML = `<div class="note warn" style="margin-top:1rem">${err.message}</div>`;
+      btn.disabled = false;
+    }
+  });
+})();
+</script>
+{% endblock %}

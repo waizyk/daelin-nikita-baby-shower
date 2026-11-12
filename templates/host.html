@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% import "_art.html" as art %}
+{% block title %}Host desk — {{ EVENT.parents }}'s Baby Shower{% endblock %}
+
+{% macro queue(items, empty_msg, kind) %}
+  {% if items %}
+    <div class="queue">
+      {% for p in items %}
+        <div class="qcard">
+          <img src="{{ url_for('media_thumb', pid=p.id) }}" alt="Photo by {{ p.guest }}"
+               data-full="{{ url_for('media_full', pid=p.id) }}" data-who="{{ p.guest }}"
+               data-msg="{{ p.message or '' }}" class="zoom">
+          <div class="body">
+            <div>
+              <div class="who">{{ p.guest }}</div>
+              {% if p.message %}<div class="msg">“{{ p.message }}”</div>{% endif %}
+            </div>
+            <div class="when">{{ p.created_at|int|datetimeformat }}</div>
+            <form method="post" action="{{ url_for('host_action') }}">
+              <input type="hidden" name="id" value="{{ p.id }}">
+              <input type="hidden" name="back" value="{{ url_for('host') }}#{{ kind }}">
+              {% if kind == 'pending' %}
+                <button class="b-yes" name="action" value="approve">✓ Approve</button>
+                <button class="b-no" name="action" value="reject">✕ Decline</button>
+              {% elif kind == 'approved' %}
+                <button class="b-del" name="action" value="pending" title="Send back to the approval queue">↩ Un-approve</button>
+                <button class="b-no" name="action" value="delete" onclick="return confirm('Delete this photo permanently?')">Delete</button>
+              {% else %}
+                <button class="b-yes" name="action" value="approve">Restore</button>
+                <button class="b-del" name="action" value="delete" onclick="return confirm('Delete this photo permanently?')">Delete</button>
+              {% endif %}
+            </form>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty" style="padding:2rem">
+      <svg viewBox="0 0 220 240" aria-hidden="true" style="width:80px">{{ art.pooh() }}</svg>
+      <p class="muted" style="margin:0">{{ empty_msg }}</p>
+    </div>
+  {% endif %}
+{% endmacro %}
+
+{% block content %}
+<section class="section" style="padding-top:clamp(1.6rem,3vw,2.4rem)">
+  <div class="wrap">
+
+    <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end;margin-bottom:1.4rem">
+      <div>
+        <p class="eyebrow">Hosts only</p>
+        <h2 style="margin-bottom:.2rem">The host desk</h2>
+        <p class="muted small" style="margin:0">Approve, decline or remove photos. Only approved photos appear in the public album.</p>
+      </div>
+      <div class="btn-row" style="margin-left:auto">
+        <a class="btn btn-ghost btn-sm" href="{{ url_for('sign') }}" target="_blank" rel="noopener">🖨 QR sign</a>
+        <a class="btn btn-ghost btn-sm" href="{{ url_for('host_zip') }}">⬇ Download approved (.zip)</a>
+        <a class="btn btn-ghost btn-sm" href="{{ drive_url }}" target="_blank" rel="noopener">Drive folder ↗</a>
+        <a class="btn btn-ghost btn-sm" href="{{ url_for('host_logout') }}">Sign out</a>
+      </div>
+    </div>
+
+    <div class="grid g3" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr));margin-bottom:.5rem">
+      <div class="stat"><b>{{ stats.pending }}</b><span>Waiting</span></div>
+      <div class="stat"><b>{{ stats.approved }}</b><span>In album</span></div>
+      <div class="stat"><b>{{ stats.rejected }}</b><span>Declined</span></div>
+      <div class="stat"><b>{{ stats.total }}</b><span>Uploaded</span></div>
+    </div>
+
+    {% if stats.pending %}
+      <div class="note warn" style="margin-top:1rem">
+        <strong>{{ stats.pending }} photo{{ '' if stats.pending == 1 else 's' }} waiting for approval.</strong>
+        Approve them so guests can see them in the album.
+      </div>
+    {% endif %}
+
+    <div class="tabs" role="tablist">
+      <button role="tab" id="tab-pending" aria-controls="pending" aria-selected="true">
+        Waiting ({{ pending|length }})
+      </button>
+      <button role="tab" id="tab-approved" aria-controls="approved" aria-selected="false">
+        In album ({{ approved|length }})
+      </button>
+      <button role="tab" id="tab-rejected" aria-controls="rejected" aria-selected="false">
+        Declined ({{ rejected|length }})
+      </button>
+    </div>
+
+    <div id="pending" class="tabpanel" role="tabpanel" aria-labelledby="tab-pending">
+      {{ queue(pending, 'Nothing to approve right now — the queue is empty. Time for a cup of tea.', 'pending') }}
+    </div>
+    <div id="approved" class="tabpanel" role="tabpanel" aria-labelledby="tab-approved" hidden>
+      {{ queue(approved, 'The album is empty. Approved photos will show up here.', 'approved') }}
+    </div>
+    <div id="rejected" class="tabpanel" role="tabpanel" aria-labelledby="tab-rejected" hidden>
+      {{ queue(rejected, 'No declined photos.', 'rejected') }}
+    </div>
+
+  </div>
+</section>
+
+<div class="lb" id="lb" role="dialog" aria-modal="true" aria-label="Photo viewer">
+  <button class="close" id="lbClose" aria-label="Close">&times;</button>
+  <figure>
+    <img id="lbImg" src="" alt="">
+    <figcaption id="lbCap"></figcaption>
+  </figure>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  /* tabs */
+  const tabs = [...document.querySelectorAll('.tabs button')];
+  tabs.forEach(t => t.addEventListener('click', () => {
+    tabs.forEach(o => {
+      o.setAttribute('aria-selected', String(o === t));
+      document.getElementById(o.getAttribute('aria-controls')).hidden = (o !== t);
+    });
+  }));
+  if (location.hash === '#approved' || location.hash === '#rejected') {
+    const t = document.getElementById('tab-' + location.hash.slice(1));
+    if (t) t.click();
+  }
+
+  /* lightbox */
+  const lb = document.getElementById('lb'), img = document.getElementById('lbImg'), cap = document.getElementById('lbCap');
+  document.querySelectorAll('.zoom').forEach(z => z.addEventListener('click', () => {
+    img.src = z.dataset.full;
+    cap.textContent = z.dataset.who + (z.dataset.msg ? ' — “' + z.dataset.msg + '”' : '');
+    lb.classList.add('open');
+  }));
+  const hide = () => lb.classList.remove('open');
+  document.getElementById('lbClose').onclick = hide;
+  lb.addEventListener('click', e => { if (e.target === lb) hide(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') hide(); });
+})();
+</script>
+{% endblock %}

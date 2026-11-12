@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% import "_art.html" as art %}
+{% block title %}Photo Album — {{ EVENT.parents }}'s Baby Shower{% endblock %}
+
+{% block content %}
+<section class="section" style="padding-top:clamp(2rem,4vw,3rem)">
+  <div class="wrap">
+
+    <div class="section-head">
+      <p class="eyebrow">Hundred Acre Wood memories</p>
+      <h2>The Photo Album</h2>
+      <p>Every photo here was added by a guest and approved by a host. Tap any picture to see it bigger.</p>
+    </div>
+
+    <div class="album-bar">
+      <span class="small"><strong>{{ photos|length }}</strong> photo{{ '' if photos|length == 1 else 's' }} in the album</span>
+      {% if auto_approve %}<span class="small muted">· photos appear instantly</span>{% endif %}
+      <div style="margin-left:auto" class="btn-row">
+        <a class="btn btn-primary btn-sm" href="{{ url_for('upload_page') }}">📷 Add your photos</a>
+        <button class="btn btn-ghost btn-sm" type="button" onclick="location.reload()">↻ Refresh</button>
+        {% if is_host %}
+          <a class="btn btn-ghost btn-sm" href="{{ url_for('host') }}">Host desk{% if pending_count %} · {{ pending_count }} waiting{% endif %}</a>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if photos %}
+      <div class="masonry">
+        {% for p in photos %}
+          <div class="tile">
+            <button class="pic" type="button"
+                    data-full="{{ url_for('media_full', pid=p.id) }}"
+                    data-who="{{ p.guest }}"
+                    data-msg="{{ p.message or '' }}"
+                    aria-label="Open photo by {{ p.guest }}">
+              <img src="{{ url_for('media_thumb', pid=p.id) }}" alt="Photo contributed by {{ p.guest }}"
+                   {% if p.thumb_w %}width="{{ p.thumb_w }}" height="{{ p.thumb_h }}"{% endif %} loading="lazy">
+            </button>
+            <div class="meta">
+              <p class="who">{{ p.guest }}</p>
+              {% if p.message %}<p class="msg">“{{ p.message }}”</p>{% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty">
+        <svg viewBox="0 0 220 240" aria-hidden="true">{{ art.pooh() }}</svg>
+        <h3>An empty album — for now</h3>
+        <p class="muted" style="max-width:42ch;margin-inline:auto">
+          The pages are waiting for the first photographs. Be the very first guest to add one —
+          Pooh says a picture is worth a thousand honey pots.
+        </p>
+        <p class="small muted" style="max-width:40ch;margin-inline:auto">
+          Just uploaded? Your photos will appear here as soon as a host approves them.
+        </p>
+        <a class="btn btn-primary" href="{{ url_for('upload_page') }}">Add the first photo</a>
+      </div>
+    {% endif %}
+
+  </div>
+</section>
+
+<!-- lightbox -->
+<div class="lb" id="lb" role="dialog" aria-modal="true" aria-label="Photo viewer">
+  <button class="close" id="lbClose" aria-label="Close">&times;</button>
+  <button class="nav-btn prev" id="lbPrev" aria-label="Previous photo">&#8249;</button>
+  <button class="nav-btn next" id="lbNext" aria-label="Next photo">&#8250;</button>
+  <figure>
+    <img id="lbImg" src="" alt="">
+    <figcaption id="lbCap"></figcaption>
+  </figure>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  const tiles = [...document.querySelectorAll('.tile .pic')];
+  if (!tiles.length) return;
+  const lb = document.getElementById('lb');
+  const img = document.getElementById('lbImg');
+  const cap = document.getElementById('lbCap');
+  let i = 0;
+
+  function show(n) {
+    i = (n + tiles.length) % tiles.length;
+    const b = tiles[i];
+    img.src = b.dataset.full;
+    img.alt = 'Photo by ' + b.dataset.who;
+    cap.textContent = b.dataset.who + (b.dataset.msg ? ' — “' + b.dataset.msg + '”' : '');
+    lb.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function hide() {
+    lb.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  tiles.forEach((b, n) => b.addEventListener('click', () => show(n)));
+  document.getElementById('lbClose').onclick = hide;
+  document.getElementById('lbPrev').onclick = () => show(i - 1);
+  document.getElementById('lbNext').onclick = () => show(i + 1);
+  lb.addEventListener('click', e => { if (e.target === lb) hide(); });
+  document.addEventListener('keydown', e => {
+    if (!lb.classList.contains('open')) return;
+    if (e.key === 'Escape') hide();
+    if (e.key === 'ArrowLeft') show(i - 1);
+    if (e.key === 'ArrowRight') show(i + 1);
+  });
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: daelin-nikita-baby-shower
+    runtime: python
+    plan: starter          # free tier wipes disk on restart; use a disk below
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --threads 4
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.4"
+    disk:
+      name: albm-data
+      mountPath: /opt/render/project/src/baby-shower-album/data
+      sizeGB: 1

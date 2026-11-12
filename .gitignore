@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.venv/
+data/album.db
+data/album.db-wal
+data/album.db-shm
+data/uploads/full/
+data/uploads/thumb/
