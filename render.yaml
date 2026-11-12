@@ -8,7 +8,13 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: "3.12.4"
+      - key: SECRET_KEY
+        generateValue: true     # Render creates a long random value
+      - key: HOST_PIN
+        sync: false             # you type it in the dashboard; never committed
+      - key: PUBLIC_URL
+        sync: false
     disk:
       name: albm-data
-      mountPath: /opt/render/project/src/baby-shower-album/data
+      mountPath: /opt/render/project/src/data
       sizeGB: 1

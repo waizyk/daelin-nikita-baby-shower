@@ -121,6 +121,16 @@
   }));
   drop.addEventListener('drop', e => { if (e.dataTransfer) addFiles(e.dataTransfer.files); });
 
+  function fail(msg) {
+    progress.classList.remove('on');
+    result.innerHTML = '';
+    const n = document.createElement('div');
+    n.className = 'note warn'; n.style.marginTop = '1rem';
+    n.textContent = msg || 'Upload failed — please try again.';
+    result.append(n);
+    btn.disabled = false;
+  }
+
   form.addEventListener('submit', async e => {
     e.preventDefault();
     if (!files.length) return;
@@ -131,6 +141,7 @@
 
     try {
       const tr = await fetch('/api/token', { method: 'POST' });
+      if (!tr.ok) throw new Error('Could not reach the album — check your connection and try again.');
       const { token } = await tr.json();
 
       const fd = new FormData();
@@ -168,15 +179,15 @@
           window.toast('Photos uploaded — thank you!');
           setTimeout(() => { window.location.href = '{{ url_for("album") }}'; }, 4200);
         } else {
-          throw new Error(data.error || 'Upload failed — please try again.');
+          fail(data.error || (xhr.status === 413
+            ? 'Those photos are too big together — try fewer at a time.'
+            : 'Upload failed — please try again.'));
         }
       };
-      xhr.onerror = () => { throw new Error('Network error — please check your connection.'); };
+      xhr.onerror = () => fail('Network error — please check your connection and try again.');
       xhr.send(fd);
     } catch (err) {
-      progress.classList.remove('on');
-      result.innerHTML = `<div class="note warn" style="margin-top:1rem">${err.message}</div>`;
-      btn.disabled = false;
+      fail(err.message);
     }
   });
 })();

@@ -12,6 +12,7 @@ import qrcode.image.svg
 from flask import (Flask, abort, g, jsonify, redirect, render_template, request,
                    send_file, send_from_directory, session, url_for)
 from markupsafe import Markup
+from werkzeug.middleware.proxy_fix import ProxyFix
 from PIL import Image, ImageOps
 
 try:  # iPhone .HEIC uploads
@@ -23,7 +24,7 @@ except Exception:  # pragma: no cover
 import config
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR = os.path.join(BASE_DIR, "data")
+DATA_DIR = os.environ.get("DATA_DIR") or os.path.join(BASE_DIR, "data")
 UPLOAD_DIR = os.path.join(DATA_DIR, "uploads")
 FULL_DIR = os.path.join(UPLOAD_DIR, "full")
 THUMB_DIR = os.path.join(UPLOAD_DIR, "thumb")
@@ -37,7 +38,11 @@ app.config["MAX_CONTENT_LENGTH"] = 60 * 1024 * 1024   # 60 MB per request
 app.secret_key = config.SECRET_KEY
 app.config["TEMPLATES_AUTO_RELOAD"] = True
 # harden the host session cookie
-app.config.update(SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SAMESITE="Lax")   # pick up edits to config.py / templates
+app.config.update(SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SAMESITE="Lax",
+                  SESSION_COOKIE_SECURE=config.PRODUCTION)   # HTTPS-only cookie in production
+# Render / PythonAnywhere sit behind a proxy: trust its scheme + host headers so
+# QR codes and links come out as https://<real domain>/...
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
 ALLOWED = {"image/jpeg", "image/png", "image/webp", "image/heic", "image/heif",
            "image/gif", "image/bmp", "image/tiff", "image/jpg", ""}
@@ -140,6 +145,11 @@ def is_host():
     return session.get("host") is True
 
 
+def pin_locked():
+    """In production the well-known default PIN is never accepted."""
+    return config.PRODUCTION and config.HOST_PIN == config.DEFAULT_PIN
+
+
 @app.context_processor
 def inject_globals():
     host = is_host()
@@ -177,9 +187,16 @@ def upload_page():
                            max_photos=config.EVENT["max_photos_per_guest"])
 
 
+def upload_url():
+    """Where every QR code points: PUBLIC_URL if configured, else this host."""
+    if config.PUBLIC_URL:
+        return config.PUBLIC_URL + url_for("upload_page")
+    return url_for("upload_page", _external=True)
+
+
 @app.route("/qr.svg")
 def qr_svg():
-    target = request.args.get("to") or url_for("upload_page", _external=True)
+    target = upload_url()
     img = qrcode.make(target, image_factory=qrcode.image.svg.SvgPathImage,
                       box_size=12, border=2)
     buf = io.BytesIO()
@@ -190,7 +207,7 @@ def qr_svg():
 @app.route("/qr.png")
 def qr_png():
     """Raster QR for printing."""
-    target = request.args.get("to") or url_for("upload_page", _external=True)
+    target = upload_url()
     img = qrcode.make(target, box_size=16, border=3)
     buf = io.BytesIO()
     img.save(buf, format="PNG")
@@ -202,7 +219,7 @@ def qr_png():
 def sign():
     """Printable A5 'scan me' sign for the party table."""
     return render_template("sign.html", page="sign",
-                           upload_url=url_for("upload_page", _external=True))
+                           upload_url=upload_url())
 
 
 @app.route("/robots.txt")
@@ -212,7 +229,7 @@ def robots():
 
 @app.route("/api/qr-target")
 def qr_target():
-    return jsonify({"url": url_for("upload_page", _external=True)})
+    return jsonify({"url": upload_url()})
 
 
 # --------------------------------------------------------------------------
@@ -291,6 +308,10 @@ def api_upload():
 
 @app.route("/media/thumb/<pid>.jpg")
 def media_thumb(pid):
+    if not is_host():
+        row = db().execute("SELECT status FROM photos WHERE id = ?", (pid,)).fetchone()
+        if not row or row["status"] != "approved":
+            abort(404)
     return send_from_directory(THUMB_DIR, f"{pid}.jpg", max_age=86400)
 
 
@@ -310,10 +331,15 @@ def media_full(pid):
 def host():
     error = None
     if request.method == "POST":
-        if request.form.get("pin") == config.HOST_PIN:
+        if pin_locked():
+            error = ("The host PIN hasn't been set on the server yet "
+                     "(HOST_PIN environment variable).")
+        elif secrets.compare_digest(request.form.get("pin", "").encode(),
+                                    config.HOST_PIN.encode()):
             session["host"] = True
             return redirect(url_for("host"))
-        error = "That PIN isn't right — try again."
+        else:
+            error = "That PIN isn't right — try again."
     if not is_host():
         return render_template("host_login.html", page="host", error=error)
     return render_template("host.html", page="host",
@@ -342,7 +368,10 @@ def host_action():
             db().execute("UPDATE photos SET status = ? WHERE id = ?",
                          (status_map[action], pid))
         db().commit()
-    return redirect(request.form.get("back") or url_for("host"))
+    back = request.form.get("back") or ""
+    if not back.startswith("/") or back.startswith("//"):
+        back = url_for("host")
+    return redirect(back)
 
 
 @app.route("/host/zip")
