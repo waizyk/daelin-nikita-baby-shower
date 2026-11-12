@@ -1,0 +1,298 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Add Your Photos — Daelin &amp; Nikita's Baby Shower</title>
+<meta name="description" content="Daelin &amp; Nikita's Winnie the Pooh baby shower — Saturday, 5 December 2026. Browse the photo album and add your own photos.">
+<meta name="theme-color" content="#FFFCF4">
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍯</text></svg>">
+</head>
+<body><div style="background:#fff6d6;border-bottom:1px solid #f1dc9a;color:#6b4e16;font:600 14px/1.4 system-ui,sans-serif;padding:.6rem 1rem;text-align:center">Preview only: the live photo site isn't up yet. Photos can go in the <a href="https://drive.google.com/drive/folders/1txOYJtkn1biaCc_c3_cRpNh6AzN9lUM4" target="_blank" rel="noopener">shared Drive folder</a> for now.</div>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="nav">
+  <div class="wrap nav-in">
+    <a class="brand" href="./">
+      <svg viewBox="0 0 40 40" aria-hidden="true">
+<g class="">
+  <path d="M14 20 h32 l-4 24 h-24 z" fill="#E8B04B" stroke="#B4863A" stroke-width="2.4" stroke-linejoin="round"/>
+  <rect x="10" y="13" width="40" height="9" rx="4.5" fill="#D99B36" stroke="#B4863A" stroke-width="2.4"/>
+  <ellipse cx="30" cy="33" rx="8" ry="5" fill="#FBE3AC" opacity=".8"/>
+</g>
+</svg>
+      <span>Daelin &amp; Nikita<small>Baby Shower · 05 . 12 . 2026</small></span>
+    </a>
+    <nav class="nav-links" aria-label="Main">
+      <a href="./" >The Shower</a>
+      <a href="photos.html" >Photo Album</a>
+      <a href="upload.html" class="active">Add Photos</a>
+      
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+
+<section class="section" style="padding-top:clamp(2rem,4vw,3rem)">
+  <div class="narrow">
+
+    <div class="section-head">
+      <p class="eyebrow">Guest uploads</p>
+      <h2>Add your photos</h2>
+      <p>Thank you for being part of Daelin &amp; Nikita's day. Pop your pictures in below —
+        a host will approve them and they'll appear in the album.</p>
+    </div>
+
+    <div class="card">
+      <div class="drop" id="drop" tabindex="0" role="button"
+           aria-label="Choose photos or drag and drop them here">
+        <svg viewBox="0 0 64 64" aria-hidden="true">
+          <rect x="4" y="14" width="56" height="40" rx="10" fill="#E4EEDF" stroke="#8FAE86" stroke-width="2.5"/>
+          <circle cx="32" cy="34" r="11" fill="#FFFCF4" stroke="#8FAE86" stroke-width="2.5"/>
+          <circle cx="32" cy="34" r="5" fill="#E8B04B"/>
+          <rect x="22" y="8" width="20" height="9" rx="4" fill="#FDF3D6" stroke="#8FAE86" stroke-width="2.5"/>
+        </svg>
+        <p style="margin:0 0 .2rem"><strong>Tap to choose photos</strong> — or drag them here</p>
+        <p class="small muted" style="margin:0">JPEG, PNG, WebP or iPhone HEIC · up to 12 at a time</p>
+      </div>
+      <input type="file" id="fileInput" accept="image/*" multiple hidden>
+
+      <div class="strip" id="strip"></div>
+
+      <form id="form" style="margin-top:1.3rem" novalidate>
+        <div class="field">
+          <label for="guest">Your name <span class="muted">(or leave it and we'll call you Anonymous Pooh)</span></label>
+          <input type="text" id="guest" name="guest" maxlength="60" placeholder="e.g. Thandi Mkhize" autocomplete="name">
+        </div>
+        <div class="field">
+          <label for="message">A message for Daelin &amp; Nikita <span class="muted">(optional)</span></label>
+          <textarea id="message" name="message" maxlength="300" placeholder="Congratulations! Here's to a lifetime of honey and adventures…"></textarea>
+        </div>
+        <div class="progress" id="progress"><i></i></div>
+        <div class="btn-row" style="margin-top:1rem">
+          <button class="btn btn-primary" type="submit" id="submitBtn" disabled>Upload photos</button>
+          <a class="btn btn-ghost" href="photos.html">Back to the album</a>
+        </div>
+      </form>
+
+      <div id="result"></div>
+    </div>
+
+    <div class="note" style="margin-top:1.4rem">
+      <strong>Wifi playing up?</strong> You can also send your photos straight to the shared Google Drive folder —
+      <a href="https://drive.google.com/drive/folders/1txOYJtkn1biaCc_c3_cRpNh6AzN9lUM4" target="_blank" rel="noopener">open the folder here</a>. Everything in Drive gets
+      pulled into the album by the hosts anyway.
+    </div>
+
+    <p class="small muted center" style="margin-top:1.2rem">
+      Photos stay private until a host approves them. Only approved pictures show in the public album.
+    </p>
+
+  </div>
+</section>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap footer-grid">
+    <div>
+      <a class="brand" href="./" style="margin-bottom:.5rem">
+        <svg viewBox="0 0 40 40" aria-hidden="true">
+<g class="">
+  <path d="M14 20 h32 l-4 24 h-24 z" fill="#E8B04B" stroke="#B4863A" stroke-width="2.4" stroke-linejoin="round"/>
+  <rect x="10" y="13" width="40" height="9" rx="4.5" fill="#D99B36" stroke="#B4863A" stroke-width="2.4"/>
+  <ellipse cx="30" cy="33" rx="8" ry="5" fill="#FBE3AC" opacity=".8"/>
+</g>
+</svg>
+        <span>Daelin &amp; Nikita<small>Saturday, 5 December 2026</small></span>
+      </a>
+      <p class="fine">Made with honey and love for the littlest Hundred Acre Wood resident.</p>
+    </div>
+    <div class="bees" aria-hidden="true">
+      
+<g transform="translate(0 0) scale(1.1)" class="">
+  <ellipse cx="0" cy="0" rx="9" ry="6.5" fill="#F4CB55" stroke="#8A6A2F" stroke-width="1.6"/>
+  <path d="M-2.5 -6.2 Q0 -1 0 0 Q0 1 -2.5 6.2" fill="none" stroke="#6B5326" stroke-width="1.6"/>
+  <path d="M3 -5.6 Q5 0 3 5.6" fill="none" stroke="#6B5326" stroke-width="1.6"/>
+  <ellipse cx="-6" cy="-6" rx="5" ry="3.6" fill="#FFFFFF" opacity=".75" stroke="#8A6A2F" stroke-width="1.1"
+           transform="rotate(-24 -6 -6)"/>
+  <path d="M8 0 l5 -2.5" stroke="#6B5326" stroke-width="1.5" fill="none"/>
+  <circle cx="14" cy="-2.6" r="1.3" fill="#6B5326"/>
+</g>
+
+<g transform="translate(0 0) scale(0.8)" class="">
+  <ellipse cx="0" cy="0" rx="9" ry="6.5" fill="#F4CB55" stroke="#8A6A2F" stroke-width="1.6"/>
+  <path d="M-2.5 -6.2 Q0 -1 0 0 Q0 1 -2.5 6.2" fill="none" stroke="#6B5326" stroke-width="1.6"/>
+  <path d="M3 -5.6 Q5 0 3 5.6" fill="none" stroke="#6B5326" stroke-width="1.6"/>
+  <ellipse cx="-6" cy="-6" rx="5" ry="3.6" fill="#FFFFFF" opacity=".75" stroke="#8A6A2F" stroke-width="1.1"
+           transform="rotate(-24 -6 -6)"/>
+  <path d="M8 0 l5 -2.5" stroke="#6B5326" stroke-width="1.5" fill="none"/>
+  <circle cx="14" cy="-2.6" r="1.3" fill="#6B5326"/>
+</g>
+
+<g transform="translate(0 0) scale(1.3)" class="">
+  <ellipse cx="0" cy="0" rx="9" ry="6.5" fill="#F4CB55" stroke="#8A6A2F" stroke-width="1.6"/>
+  <path d="M-2.5 -6.2 Q0 -1 0 0 Q0 1 -2.5 6.2" fill="none" stroke="#6B5326" stroke-width="1.6"/>
+  <path d="M3 -5.6 Q5 0 3 5.6" fill="none" stroke="#6B5326" stroke-width="1.6"/>
+  <ellipse cx="-6" cy="-6" rx="5" ry="3.6" fill="#FFFFFF" opacity=".75" stroke="#8A6A2F" stroke-width="1.1"
+           transform="rotate(-24 -6 -6)"/>
+  <path d="M8 0 l5 -2.5" stroke="#6B5326" stroke-width="1.5" fill="none"/>
+  <circle cx="14" cy="-2.6" r="1.3" fill="#6B5326"/>
+</g>
+
+    </div>
+    <div class="fine" style="text-align:right">
+      <a href="upload.html">Add your photos</a> ·
+      <a href="photos.html">See the album</a>
+      
+    </div>
+  </div>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+  window.toast = function (msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(window.__tt);
+    window.__tt = setTimeout(() => t.classList.remove('show'), 3400);
+  };
+</script>
+
+<script>
+(function () {
+  const drop = document.getElementById('drop');
+  const input = document.getElementById('fileInput');
+  const strip = document.getElementById('strip');
+  const form = document.getElementById('form');
+  const btn = document.getElementById('submitBtn');
+  const progress = document.getElementById('progress');
+  const progressBar = progress.querySelector('i');
+  const result = document.getElementById('result');
+  const MAX = 12;
+  let files = [];
+
+  if (!window.FormData || !window.fetch) return;
+
+  function render() {
+    strip.innerHTML = '';
+    files.forEach((f, i) => {
+      const d = document.createElement('div');
+      d.className = 'thumb';
+      const img = document.createElement('img');
+      img.src = URL.createObjectURL(f);
+      img.alt = f.name;
+      const x = document.createElement('button');
+      x.className = 'x'; x.type = 'button'; x.textContent = '×';
+      x.setAttribute('aria-label', 'Remove ' + f.name);
+      x.onclick = () => { files.splice(i, 1); render(); };
+      d.append(img, x);
+      strip.append(d);
+    });
+    btn.disabled = files.length === 0;
+    btn.textContent = files.length ? `Upload ${files.length} photo${files.length > 1 ? 's' : ''}` : 'Upload photos';
+  }
+
+  function addFiles(list) {
+    const incoming = [...list].filter(f => f.type.startsWith('image/') || /\.(heic|heif)$/i.test(f.name));
+    const room = MAX - files.length;
+    if (incoming.length > room) {
+      window.toast(`You can add ${MAX} photos per batch — keeping the first ${room}.`);
+    }
+    files = files.concat(incoming.slice(0, Math.max(room, 0)));
+    render();
+  }
+
+  drop.addEventListener('click', () => input.click());
+  drop.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); input.click(); }
+  });
+  input.addEventListener('change', () => { addFiles(input.files); input.value = ''; });
+
+  ['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => {
+    e.preventDefault(); drop.classList.add('hot');
+  }));
+  ['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => {
+    e.preventDefault(); drop.classList.remove('hot');
+  }));
+  drop.addEventListener('drop', e => { if (e.dataTransfer) addFiles(e.dataTransfer.files); });
+
+  function fail(msg) {
+    progress.classList.remove('on');
+    result.innerHTML = '';
+    const n = document.createElement('div');
+    n.className = 'note warn'; n.style.marginTop = '1rem';
+    n.textContent = msg || 'Upload failed — please try again.';
+    result.append(n);
+    btn.disabled = false;
+  }
+
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    if (!files.length) return;
+    btn.disabled = true;
+    result.innerHTML = '';
+    progress.classList.add('on');
+    progressBar.style.width = '8%';
+
+    try {
+      const tr = await fetch('/api/token', { method: 'POST' });
+      if (!tr.ok) throw new Error('Could not reach the album — check your connection and try again.');
+      const { token } = await tr.json();
+
+      const fd = new FormData();
+      fd.append('token', token);
+      fd.append('guest', document.getElementById('guest').value);
+      fd.append('message', document.getElementById('message').value);
+      files.forEach(f => fd.append('photos', f, f.name));
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', '/api/upload');
+      xhr.upload.onprogress = ev => {
+        if (ev.lengthComputable) {
+          progressBar.style.width = Math.max(8, Math.round(ev.loaded / ev.total * 95)) + '%';
+        }
+      };
+      xhr.onload = () => {
+        progressBar.style.width = '100%';
+        let data = {};
+        try { data = JSON.parse(xhr.responseText); } catch (_) {}
+        if (xhr.status === 200 && data.ok) {
+          const n = data.count;
+          const pendingMsg = data.status === 'pending'
+            ? 'A host will approve them shortly — then they\'ll show up in the album.'
+            : 'They\'re already in the album!';
+          const nextMsg = data.status === 'pending'
+            ? 'Taking you to the album… you can also add more photos.'
+            : 'Taking you to the album…';
+          result.innerHTML = `<div class="note ok" style="margin-top:1rem">
+            <strong>Thank you! 🍯 ${n} photo${n === 1 ? '' : 's'} received.</strong><br>${pendingMsg}
+            <br><span class="small">${nextMsg}</span>
+            ${data.failed ? `<br><span class="small">${data.failed} file(s) couldn't be read and were skipped.</span>` : ''}
+          </div>`;
+          files = []; render();
+          document.getElementById('message').value = '';
+          window.toast('Photos uploaded — thank you!');
+          setTimeout(() => { window.location.href = 'photos.html'; }, 4200);
+        } else {
+          fail(data.error || (xhr.status === 413
+            ? 'Those photos are too big together — try fewer at a time.'
+            : 'Upload failed — please try again.'));
+        }
+      };
+      xhr.onerror = () => fail('Network error — please check your connection and try again.');
+      xhr.send(fd);
+    } catch (err) {
+      fail(err.message);
+    }
+  });
+})();
+</script>
+
+<script>document.addEventListener("submit",function(e){e.preventDefault();e.stopImmediatePropagation();window.toast&&window.toast('This is the preview. Uploads work on the live site.');},true);</script></body>
+</html>
