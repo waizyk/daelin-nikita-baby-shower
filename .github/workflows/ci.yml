@@ -26,4 +26,5 @@ jobs:
       - name: Static preview is up to date
         run: |
           python tools/build_preview.py
-          git diff --exit-code -- docs || (echo "::error::docs/ is stale - run python tools/build_preview.py and commit" && exit 1)
+          git diff --exit-code -- docs ':!docs/qr.svg' ||   # qr.svg bytes vary by Python/qrcode version
+          (echo "::error::docs/ is stale - run python tools/build_preview.py and commit" && exit 1)
