@@ -28,3 +28,24 @@ jobs:
           python tools/build_preview.py
           git diff --exit-code -- docs ':!docs/qr.svg' ||   # qr.svg bytes vary by Python/qrcode version
           (echo "::error::docs/ is stale - run python tools/build_preview.py and commit" && exit 1)
+
+  worker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build the live site's pages
+        run: |
+          pip install -r requirements.txt
+          python tools/build_worker.py
+      - name: Worker checks
+        working-directory: worker
+        run: |
+          node --check src/index.js && node --check src/lib.js
+          node --test test/

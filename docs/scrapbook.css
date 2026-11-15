@@ -1,0 +1,77 @@
+/* The Scrapbook: polaroids, washi tape, photo corners and stickers on cream paper */
+.scrap-page{
+  --tape-honey:rgba(231,174,69,.62); --tape-sage:rgba(141,167,127,.6);
+  --tape-blush:rgba(240,195,184,.75); --tape-sky:rgba(160,196,218,.62);
+  background:
+    radial-gradient(circle at 1px 1px,rgba(75,58,38,.09) 1px,transparent 1.3px) 0 0/22px 22px,
+    linear-gradient(transparent 0 0);
+}
+.scrapbook{columns:4 230px;column-gap:clamp(1rem,2.4vw,2rem);padding:1.2rem .3rem 2rem}
+.snap,.sticker{break-inside:avoid;display:inline-block;width:100%;margin:0 0 clamp(1.4rem,3vw,2.2rem)}
+.snap{position:relative;background:#FFFEF9;padding:10px 10px 14px;border-radius:2px;
+  box-shadow:0 1px 1px rgba(75,58,38,.18),0 10px 22px -12px rgba(75,58,38,.55);
+  transform:rotate(var(--tilt));transition:transform .25s ease,box-shadow .25s ease}
+.snap:hover,.snap:focus-within{transform:rotate(0) translateY(-4px) scale(1.02);z-index:2;
+  box-shadow:0 2px 2px rgba(75,58,38,.18),0 20px 34px -16px rgba(75,58,38,.6)}
+.snap .pic{display:block;width:100%;padding:0;border:0;background:#EFE6D2;cursor:zoom-in;position:relative;line-height:0}
+.snap img{display:block;width:100%;height:auto;min-height:90px;object-fit:cover}
+.snap figcaption{font-family:var(--hand);color:var(--ink);padding:.55rem .2rem 0;line-height:1.25}
+.snap .who{display:block;font-size:1.12rem;text-align:right}
+.snap .msg{display:block;font-size:1rem;color:var(--ink-soft);margin-top:.15rem}
+/* washi tape */
+.snap.tape::before{content:"";position:absolute;top:-13px;left:50%;width:42%;height:26px;
+  transform:translateX(-50%) rotate(var(--tape-tilt));background:var(--tape);
+  clip-path:polygon(0 8%,4% 0,8% 10%,12% 0,16% 8%,20% 0,80% 0,84% 9%,88% 0,92% 10%,96% 0,100% 9%,100% 92%,96% 100%,92% 90%,88% 100%,84% 92%,80% 100%,20% 100%,16% 91%,12% 100%,8% 90%,4% 100%,0 92%);
+  box-shadow:inset 0 0 0 100px rgba(255,255,255,.08)}
+/* photo corners */
+.snap.corners .pic::before,.snap.corners .pic::after{content:"";position:absolute;width:30px;height:30px;z-index:1;
+  background:linear-gradient(135deg,#4B3A26 0 50%,transparent 50%);opacity:.85}
+.snap.corners .pic::before{top:-4px;left:-4px}
+.snap.corners .pic::after{bottom:-4px;right:-4px;transform:rotate(180deg)}
+/* honey pin */
+.snap.pin::before{content:"";position:absolute;top:-8px;left:50%;width:18px;height:18px;margin-left:-9px;border-radius:50%;z-index:2;
+  background:radial-gradient(circle at 35% 30%,#FFE7A8,#E7AE45 45%,#B57A1F 100%);box-shadow:0 3px 4px -1px rgba(75,58,38,.5)}
+/* little films */
+.snap.film{padding:17px 10px 14px;background:
+  repeating-linear-gradient(90deg,rgba(255,254,249,.85) 0 8px,transparent 8px 16px) left 4px top 5px/100% 6px no-repeat,#2E241A}
+.snap.film figcaption{color:#FBF3E0}.snap.film .msg{color:#E9D9B8}
+.snap .play{position:absolute;left:50%;top:50%;width:58px;height:58px;margin:-29px 0 0 -29px;border-radius:50%;
+  display:grid;place-items:center;font-size:1.4rem;line-height:1;color:#4B3A26;padding-left:4px;
+  background:radial-gradient(circle at 35% 30%,#FFE7A8,#E7AE45 60%,#C8892B);box-shadow:0 6px 16px -4px rgba(0,0,0,.5)}
+.snap.developing .pic{min-height:150px;line-height:1.4}
+.snap.developing .pic::after{content:"still developing… 🎞️";position:absolute;inset:0;display:grid;place-items:center;
+  font-family:var(--hand);font-size:1.1rem;color:var(--ink-soft)}
+.snap.new{animation:dropin .7s cubic-bezier(.2,1.4,.4,1) both}
+.snap.new::after{content:"New!";position:absolute;right:-10px;top:-12px;z-index:3;background:var(--blush-deep);color:#fff;
+  font:1rem/1 var(--hand);padding:.35rem .55rem;border-radius:50%;transform:rotate(12deg)}
+@keyframes dropin{from{opacity:0;transform:translateY(-30px) rotate(calc(var(--tilt) * 4)) scale(1.1)}}
+/* stickers */
+.sticker{text-align:center;transform:rotate(var(--tilt));pointer-events:none}
+.sticker img{width:62%;height:auto;filter:drop-shadow(0 6px 8px rgba(75,58,38,.25))}
+.sticker svg{width:46%;height:auto}
+.sticker .stamp{display:inline-block;font:1.15rem/1.05 var(--serif);color:var(--honey-deep);letter-spacing:.06em;text-transform:uppercase;
+  border:3px double var(--honey-deep);padding:.7rem 1rem;border-radius:6px;opacity:.75}
+.sticker .stamp.round{border-radius:50%;padding:1.2rem .9rem;color:var(--sage-deep);border-color:var(--sage-deep)}
+/* lightbox additions */
+.scrap-lb figure{display:flex;flex-direction:column;align-items:center;max-width:94vw}
+.scrap-lb .lb-stage{display:grid;place-items:center;max-height:80vh}
+.scrap-lb .lb-stage img,.scrap-lb .lb-stage video{max-width:92vw;max-height:78vh;border:10px solid #FFFEF9;border-bottom-width:12px;
+  border-radius:2px;box-shadow:0 20px 50px rgba(0,0,0,.5);background:#000}
+.scrap-lb figcaption{font-family:var(--hand);font-size:1.2rem}
+.scrap-lb .lb-dl{margin-left:.6rem;font-size:.95rem;color:var(--honey);text-decoration:underline}
+.developing-note{color:#FBF3E0;font-size:1.3rem;padding:2rem}
+@media(max-width:560px){.scrapbook{columns:2 140px;column-gap:.9rem}.snap{padding:6px 6px 10px}.snap .who{font-size:1rem}
+  .snap .msg{font-size:.9rem}.snap.tape::before{height:18px;top:-9px}.sticker .stamp{font-size:.9rem;padding:.5rem .6rem}}
+@media(prefers-reduced-motion:reduce){.snap,.snap.new{transition:none;animation:none}}
+/* upload page extras */
+.thumb.vid::after{content:"▶";position:absolute;left:6px;bottom:4px;color:#fff;text-shadow:0 1px 3px #000;font-size:.9rem}
+.thumb video{width:100%;height:100%;object-fit:cover;display:block}
+.thumb.noprev img{opacity:0}.thumb.noprev::before{content:"📷 " attr(data-name);position:absolute;inset:0;display:grid;place-items:center;
+  font-size:.7rem;text-align:center;padding:4px;color:var(--ink-soft);word-break:break-all}
+.thumb .st{position:absolute;inset:0;pointer-events:none}
+.thumb[data-state=up] .st{background:rgba(251,243,224,.55)}
+.thumb[data-state=up] .st::after{content:"…";position:absolute;inset:0;display:grid;place-items:center;font-size:1.4rem}
+.thumb[data-state=done] .st::after{content:"✓";position:absolute;right:4px;top:4px;width:22px;height:22px;border-radius:50%;
+  background:var(--sage-deep);color:#fff;display:grid;place-items:center;font-size:.8rem}
+.thumb[data-state=fail] .st{background:rgba(196,119,103,.35)}
+.drop.off{opacity:.5;pointer-events:none}

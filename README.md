@@ -5,10 +5,9 @@ A complete little website for the baby shower on **Saturday, 5 December 2026**:
 | Page | What it does |
 |---|---|
 | `/` | The invitation — date, time, venue, map, dress code, hosts, gifts (RSVP optional), plus a QR code |
-| `/photos` | The photo album (only host-approved photos appear here) |
-| `/upload` | Where the QR code sends guests — upload photos straight from a phone |
-| `/host` | Host desk — approve / decline / delete photos (PIN protected) |
-| `/host/zip` | Downloads every approved photo in one zip |
+| `/photos` | The scrapbook: host-approved photos and videos as polaroids, with a slideshow |
+| `/upload` | Where the QR code sends guests. Photos and videos go straight into the parents' Google Photos album |
+| `/host` | Host desk: connect Google Photos, approve or hide uploads (PIN protected) |
 | `/sign` | A printable A5/A4 "scan me" sign for the party table (with the real QR) |
 
 Everything is themed like the classic storybook Winnie-the-Pooh: watercolour
@@ -79,21 +78,58 @@ it to Drive) and nothing is ever lost.
 
 ---
 
-## 3. Put it online so the QR code works for guests
+## 3. The live site: Cloudflare + Google Photos (free)
 
-The QR code points at whichever address the site runs on, so **host it first,
-then print the sign**.
+**Live address:** https://daelin-nikita.aceops.workers.dev (hosted on the ACE OPS Cloudflare account)
 
-| Env var | What | Required |
-|---|---|---|
-| `HOST_PIN` | PIN for `/host`. In production the default `hundredacre` is refused. | yes |
-| `SECRET_KEY` | long random string that signs the host cookie. Setting it also switches on production mode (HTTPS-only cookie). | yes |
-| `PUBLIC_URL` | final address, e.g. `https://daelinnikita.pythonanywhere.com`. Pins every QR to it. | recommended |
-| `DATA_DIR` | where the database and photos live (default `./data`) | no |
+```
+guest's phone ──8 MB chunks──▶ Cloudflare Worker ──▶ Google Photos album (parents' account, original quality)
+                                     │
+                                     └─ D1 database: who sent what, their message, approved or not
+scrapbook (/photos) ◀── approved items only, images streamed from Google Photos
+```
 
-Make a secret with `python3 -c "import secrets; print(secrets.token_urlsafe(48))"`.
+- Photos **and videos** (up to 2 GB each) upload straight into an album in the parents'
+  Google Photos. That album is the permanent archive. It keeps everything, even items hidden on the site.
+- Uploads resume by themselves if the signal drops mid-video.
+- The scrapbook only shows what a host has approved. It refreshes itself every 30 s, and there's a slideshow button for a TV.
+- Code: `worker/` (Worker + tests). The pages are rendered from the same templates by
+  `tools/build_worker.py`. Deployment is done by the ACE OPS platform's **Event sites** workflow,
+  which pins the commit to deploy in `events/daelin-nikita.ref`.
 
-### Option A: PythonAnywhere (free, persistent disk, no card) ← recommended
+### One-time setup (about 10 minutes)
+
+**A. Google Cloud (Ace, on any Google account):**
+1. https://console.cloud.google.com → create a project named `Baby Shower Photos`.
+2. **APIs & Services → Library** → search **Photos Library API** → **Enable**.
+3. **Google Auth Platform → Branding**: app name `Daelin & Nikita Baby Shower`, add your support email → Save.
+4. **Audience**: User type **External** → **Publish app** (status must say *In production*.
+   In *Testing*, Google expires the sign-in after 7 days).
+5. **Data Access → Add or remove scopes**: add `.../auth/photoslibrary.appendonly` and
+   `.../auth/photoslibrary.readonly.appcreateddata` → Save.
+6. **Clients → Create client → Web application**. Under *Authorized redirect URIs* add
+   `https://daelin-nikita.aceops.workers.dev/auth/callback` → Create, then copy the **Client ID** and **Client secret**.
+
+**B. Host desk (`/host`):**
+1. Sign in with the **setup code**. Ace has it; it's never stored in this repo.
+2. Paste the Client ID and secret → **Save client**.
+3. Tap **Connect Google Photos** and sign in with **the parents' Google account**. Google shows
+   *"Google hasn't verified this app"*, which is normal for a private family app: **Advanced → Go to … (unsafe)** → tick the boxes → Continue.
+   The site can only add to, and read back, the album it creates. It can't see the rest of the library.
+4. Set a **hosts' PIN** and give it to the hosts. They use it to open the desk.
+5. Afterwards, share the album from the Google Photos app (**Share → Create link**). Google no longer lets websites do this.
+
+Free-tier limits: Google Photos uploads count toward the parents' 15 GB of Google storage.
+Cloudflare's free tier (100k requests/day) covers hundreds of guests.
+
+---
+
+### Fallback: the original Flask app
+
+The Python app in this repo (`app.py`) still works on its own, with photos stored on its own disk.
+It's no longer used for the live site.
+
+#### Option A: PythonAnywhere (free, persistent disk, no card)
 1. Sign up for a free **Beginner** account at <https://www.pythonanywhere.com>.
    The username becomes the address, so pick one like `daelinnikita` for
    `daelinnikita.pythonanywhere.com`.
@@ -130,13 +166,13 @@ Free-tier limits: 512 MB disk is roughly 500 photos at the sizes this app stores
 from one guest makes the next guest wait a few seconds. Download the approved
 zip from the host desk after the party (and once mid-way if it gets busy).
 
-### Option B: Render Blueprint (paid: starter plan + 1 GB disk)
+#### Option B: Render Blueprint (paid: starter plan + 1 GB disk)
 `render.yaml` defines the service, a 1 GB disk on `data/`, a generated
 `SECRET_KEY`, and prompts for `HOST_PIN` / `PUBLIC_URL`. *New → Blueprint → pick
 this repo → Apply*. Render's free plan has no disk, so photos would be wiped
 on every restart. Don't use it for this.
 
-### Option C: a laptop / Raspberry Pi on the venue wifi
+#### Option C: a laptop / Raspberry Pi on the venue wifi
 ```bash
 pip install -r requirements.txt
 HOST_PIN=... SECRET_KEY=... gunicorn app:app -b 0.0.0.0:8000 --workers 2

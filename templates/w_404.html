@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Oh bother — page not found{% endblock %}
+{% block content %}
+<section class="section"><div class="narrow center">
+  <img src="{{ url_for('static', filename='img/hunny.webp') }}" width="220" height="220" alt="" style="width:180px">
+  <h2>Oh bother.</h2>
+  <p>This page seems to have wandered off into the Hundred Acre Wood.</p>
+  <div class="btn-row" style="justify-content:center">
+    <a class="btn btn-primary" href="{{ url_for('index') }}">Back to the shower</a>
+    <a class="btn btn-ghost" href="{{ url_for('album') }}">See the scrapbook</a>
+  </div>
+</div></section>
+{% endblock %}

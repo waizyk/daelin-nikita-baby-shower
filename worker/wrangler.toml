@@ -1,0 +1,26 @@
+# Daelin & Nikita · baby shower photo site → https://daelin-nikita.<account>.workers.dev
+# Deployed by the ACE OPS platform's "Event sites" workflow (Cloudflare free plan).
+# Build the pages first:  python tools/build_worker.py   (writes worker/public/)
+name = "daelin-nikita"
+main = "src/index.js"
+compatibility_date = "2025-09-01"
+workers_dev = true
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+not_found_handling = "404-page"
+html_handling = "auto-trailing-slash"
+run_worker_first = ["/api/*", "/m/*", "/auth/*"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "daelin_nikita"
+database_id = "REPLACE_WITH_D1_ID"
+
+[vars]
+ALBUM_TITLE = "Daelin & Nikita's Baby Shower · 5 Dec 2026"
+AUTO_APPROVE = ""
+# SHA-256 of the one-time setup code (the code itself is never committed).
+# The code opens the host desk as admin: paste the Google client, connect the album, set the hosts' PIN.
+SETUP_HASH = "2f7030da291dc0ff72eaff4a55e1db0d0b0aef1479a1f02ad52b5cb71222c271"

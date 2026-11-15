@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+{% import "_art.html" as art %}
+{% block title %}Add Your Photos — {{ EVENT.parents }}'s Baby Shower{% endblock %}
+
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='scrapbook.css') }}">{% endblock %}
+
+{% block content %}
+<section class="section" style="padding-top:clamp(2rem,4vw,3rem)">
+  <div class="narrow">
+
+    <div class="section-head">
+      <img class="up-hero float-slow" src="{{ url_for('static', filename='img/balloon.webp') }}" width="460" height="690" alt="">
+      <span class="chapter">In Which You Add Your Photographs</span>
+      <h2>Add your photos &amp; videos</h2>
+      <p>Thank you for being part of {{ EVENT.parents }}'s day. Pop your pictures and little videos in below.
+        They go straight into the family's album, and a host adds them to the scrapbook.</p>
+    </div>
+
+    <div class="note warn" id="closed" hidden style="margin-bottom:1.2rem">
+      <strong>The album isn't open just yet.</strong> Please use the Google Drive link below for now.
+      The hosts will move everything into the album.
+    </div>
+
+    <div class="card" id="card">
+      <div class="drop" id="drop" tabindex="0" role="button"
+           aria-label="Choose photos and videos, or drag and drop them here">
+        {{ art.icon('camera') }}
+        <p style="margin:0 0 .2rem"><strong>Tap to choose photos &amp; videos</strong> (or drag them here)</p>
+        <p class="small muted" style="margin:0">Straight from your camera roll · iPhone HEIC and Live videos welcome · up to {{ max_files }} at a time</p>
+      </div>
+      <input type="file" id="fileInput" accept="image/*,video/*" multiple hidden>
+
+      <div class="strip" id="strip"></div>
+
+      <form id="form" style="margin-top:1.3rem" novalidate>
+        <div class="field">
+          <label for="guest">Your name <span class="muted">(or leave it, and we'll call you a Mystery Heffalump)</span></label>
+          <input type="text" id="guest" maxlength="60" placeholder="e.g. Thandi Mkhize" autocomplete="name">
+        </div>
+        <div class="field">
+          <label for="message">A message for {{ EVENT.parents }} <span class="muted">(optional)</span></label>
+          <textarea id="message" maxlength="300" placeholder="Congratulations! Here's to a lifetime of honey and adventures…"></textarea>
+        </div>
+        <div class="progress" id="progress"><i></i></div>
+        <p class="small muted center" id="progressText" aria-live="polite" style="margin:.5rem 0 0;min-height:1.2em"></p>
+        <div class="btn-row" style="margin-top:1rem">
+          <button class="btn btn-primary" type="submit" id="submitBtn" disabled>Upload</button>
+          <a class="btn btn-ghost" href="{{ url_for('album') }}">See the scrapbook</a>
+        </div>
+      </form>
+
+      <div id="result"></div>
+    </div>
+
+    <div class="note" style="margin-top:1.4rem">
+      <strong>Wifi playing up?</strong> You can also send your photos straight to the shared Google Drive folder:
+      <a href="{{ drive_url }}" target="_blank" rel="noopener">open the folder here</a>. The hosts add everything in
+      Drive to the album too.
+    </div>
+
+    <p class="small muted center" style="margin-top:1.2rem">
+      Photos and videos are saved, at full quality, to {{ EVENT.parents }}'s private Google Photos album.
+      Only pictures a host approves appear on this website.
+    </p>
+
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const drop = $('drop'), input = $('fileInput'), strip = $('strip'), form = $('form'), btn = $('submitBtn');
+  const bar = $('progress'), barI = bar.querySelector('i'), ptext = $('progressText'), result = $('result');
+  const MAX = {{ max_files }};
+  const VID = /\.(mp4|mov|m4v|3gp|webm|avi|mkv|mts)$/i, IMG = /\.(jpe?g|png|gif|webp|heic|heif|avif|bmp|tiff?|dng)$/i;
+  let files = [], busy = false;
+
+  fetch('/api/status').then(r => r.json()).then(s => {
+    if (!s.accepting) { $('closed').hidden = false; btn.disabled = true; drop.classList.add('off'); }
+  }).catch(() => {});
+
+  const isVideo = f => f.type.startsWith('video/') || (!f.type && VID.test(f.name));
+  const ok = f => f.type.startsWith('image/') || f.type.startsWith('video/') || IMG.test(f.name) || VID.test(f.name);
+  const mb = n => n > 1e9 ? (n / 1e9).toFixed(1) + ' GB' : Math.max(.1, n / 1e6).toFixed(1) + ' MB';
+
+  function render() {
+    strip.innerHTML = '';
+    files.forEach((f, i) => {
+      const d = document.createElement('div');
+      d.className = 'thumb' + (isVideo(f) ? ' vid' : '');
+      d.id = 'f' + i;
+      let el;
+      if (isVideo(f)) {
+        el = document.createElement('video');
+        el.muted = true; el.playsInline = true; el.preload = 'metadata';
+        el.src = URL.createObjectURL(f) + '#t=0.5';
+      } else {
+        el = document.createElement('img');
+        el.alt = f.name;
+        el.src = URL.createObjectURL(f);
+        el.onerror = () => { d.classList.add('noprev'); d.dataset.name = f.name.slice(0, 18); };  // HEIC on Android/desktop
+      }
+      const x = document.createElement('button');
+      x.className = 'x'; x.type = 'button'; x.textContent = '×';
+      x.setAttribute('aria-label', 'Remove ' + f.name);
+      x.onclick = () => { if (!busy) { files.splice(i, 1); render(); } };
+      const st = document.createElement('span'); st.className = 'st';
+      d.append(el, x, st);
+      strip.append(d);
+    });
+    btn.disabled = busy || !files.length || !$('closed').hidden;
+    const v = files.filter(isVideo).length, p = files.length - v;
+    btn.textContent = files.length
+      ? 'Upload ' + [p && p + ' photo' + (p > 1 ? 's' : ''), v && v + ' video' + (v > 1 ? 's' : '')].filter(Boolean).join(' & ')
+      : 'Upload';
+  }
+  function addFiles(list) {
+    if (busy) return;
+    const incoming = [...list].filter(ok);
+    if (incoming.length < list.length) window.toast('Only photos and videos can go in the album.');
+    const room = MAX - files.length;
+    if (incoming.length > room) window.toast(`Up to ${MAX} at a time. Keeping the first ${Math.max(room, 0)}.`);
+    files = files.concat(incoming.slice(0, Math.max(room, 0)));
+    render();
+  }
+  drop.addEventListener('click', () => input.click());
+  drop.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); input.click(); } });
+  input.addEventListener('change', () => { addFiles(input.files); input.value = ''; });
+  ['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('hot'); }));
+  ['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('hot'); }));
+  drop.addEventListener('drop', e => { if (e.dataTransfer) addFiles(e.dataTransfer.files); });
+
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  async function api(url, opts = {}) {
+    const r = await fetch(url, { ...opts, headers: { 'x-requested-with': 'fetch', ...(opts.headers || {}) } });
+    let d = {}; try { d = await r.json(); } catch (_) {}
+    if (!r.ok) { const e = new Error(d.error || 'Upload failed'); e.status = r.status; throw e; }
+    return d;
+  }
+  function putChunk(url, blob, onProgress) {
+    return new Promise((resolve, reject) => {
+      const x = new XMLHttpRequest();
+      x.open('PUT', url);
+      x.setRequestHeader('x-requested-with', 'fetch');
+      x.setRequestHeader('content-type', 'application/octet-stream');
+      x.upload.onprogress = e => e.lengthComputable && onProgress(e.loaded);
+      x.onload = () => {
+        let d = {}; try { d = JSON.parse(x.responseText); } catch (_) {}
+        if (x.status === 200 && d.ok) resolve(d);
+        else { const e = new Error(d.error || 'Upload failed'); e.status = x.status; reject(e); }
+      };
+      x.onerror = () => reject(new Error('Network hiccup'));
+      x.timeout = 120000; x.ontimeout = () => reject(new Error('Network hiccup'));
+      x.send(blob);
+    });
+  }
+
+  let doneBytes = 0, totalBytes = 0;
+  function showProgress(extra, label) {
+    const pct = totalBytes ? Math.min(99, Math.round((doneBytes + extra) / totalBytes * 100)) : 0;
+    barI.style.width = Math.max(4, pct) + '%';
+    ptext.textContent = label + ' · ' + pct + '%';
+  }
+
+  async function uploadOne(f, i, guest, message) {
+    const mark = s => { const t = $('f' + i); if (t) t.dataset.state = s; };
+    mark('up');
+    const start = await api('/api/upload/start', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ name: f.name, size: f.size, type: f.type, guest, message }),
+    });
+    let offset = 0, tries = 0;
+    const label = `Sending ${i + 1} of ${files.length}${f.size > 20e6 ? ' (' + mb(f.size) + ')' : ''}`;
+    while (offset < f.size) {
+      const end = Math.min(offset + start.chunk, f.size);
+      try {
+        const d = await putChunk(`/api/upload/${start.id}?offset=${offset}`, f.slice(offset, end), n => showProgress(offset + n, label));
+        offset = d.done ? f.size : d.received; tries = 0;
+        showProgress(offset, label);
+      } catch (e) {
+        if (e.status && e.status < 500 && e.status !== 429) throw e;
+        if (++tries > 6) throw new Error('The connection keeps dropping. Try again on better signal, or use the Drive link below.');
+        ptext.textContent = 'Signal dipped, picking up where we left off…';
+        await sleep(1500 * tries);
+        try { const q = await api(`/api/upload/${start.id}`); if (q.received >= 0 && q.received <= f.size) offset = q.received; } catch (_) {}
+      }
+    }
+    mark('done');
+    doneBytes += f.size;
+  }
+
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    if (!files.length || busy) return;
+    busy = true; render(); result.innerHTML = '';
+    let lock = null;
+    try { lock = await navigator.wakeLock?.request('screen'); } catch (_) {}
+    bar.classList.add('on');
+    doneBytes = 0; totalBytes = files.reduce((a, f) => a + f.size, 0);
+    const guest = $('guest').value, message = $('message').value;
+    let sent = 0; const failed = [];
+    for (let i = 0; i < files.length; i++) {
+      try { await uploadOne(files[i], i, guest, message); sent++; }
+      catch (err) { failed.push(files[i].name + ': ' + err.message); const t = $('f' + i); if (t) t.dataset.state = 'fail'; doneBytes += files[i].size; }
+    }
+    try { lock && lock.release(); } catch (_) {}
+    barI.style.width = '100%'; ptext.textContent = '';
+    busy = false;
+    const n = document.createElement('div');
+    n.style.marginTop = '1rem';
+    if (sent) {
+      n.className = 'note ok';
+      n.innerHTML = `<strong>Thank you! 🍯 ${sent} file${sent === 1 ? '' : 's'} added to the album.</strong><br>
+        A host will pop them in the scrapbook shortly.`;
+      window.toast('Uploaded. Thank you!');
+    } else n.className = 'note warn';
+    if (failed.length) {
+      const f = document.createElement('div'); f.className = 'small'; f.style.marginTop = '.4rem';
+      f.textContent = (sent ? 'These didn\'t make it: ' : 'Nothing could be sent: ') + failed.join(' · ');
+      n.append(f);
+    }
+    result.append(n);
+    setTimeout(() => { files = files.filter((_, i) => $('f' + i)?.dataset.state === 'fail'); bar.classList.remove('on'); render(); }, 2500);
+  });
+})();
+</script>
+{% endblock %}

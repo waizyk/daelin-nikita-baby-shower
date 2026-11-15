@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+{% import "_art.html" as art %}
+{% block title %}The Scrapbook — {{ EVENT.parents }}'s Baby Shower{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='scrapbook.css') }}">{% endblock %}
+
+{% block content %}
+<section class="section scrap-page" style="padding-top:clamp(2rem,4vw,3rem)">
+  <div class="wrap">
+
+    <div class="section-head">
+      <span class="chapter">In Which Everybody Remembers the Day</span>
+      <h2>The Scrapbook</h2>
+      <p>Every snap here was added by a guest. Tap a picture to see it bigger, or press play on the little films.</p>
+    </div>
+
+    <div class="album-bar">
+      <span class="small" id="count">Opening the scrapbook…</span>
+      <div style="margin-left:auto" class="btn-row">
+        <a class="btn btn-primary btn-sm" href="{{ url_for('upload_page') }}">Add your photos</a>
+        <button class="btn btn-ghost btn-sm" type="button" id="showBtn" hidden>▶ Slideshow</button>
+      </div>
+    </div>
+
+    <div class="scrapbook" id="book" aria-live="polite"></div>
+
+    <div class="empty" id="empty" hidden>
+      <img src="{{ url_for('static', filename='img/hunny.webp') }}" width="420" height="420" alt="">
+      <h3>An empty scrapbook, for now</h3>
+      <p class="muted" style="max-width:42ch;margin-inline:auto">
+        The pages are waiting for the first photographs. Be the very first guest to add one.
+        A picture is worth a thousand hunny pots.
+      </p>
+      <p class="small muted" style="max-width:40ch;margin-inline:auto">
+        Just uploaded? Your photos pop in here as soon as a host has had a look.
+      </p>
+      <a class="btn btn-primary" href="{{ url_for('upload_page') }}">Add the first photo</a>
+    </div>
+
+  </div>
+</section>
+
+<div class="lb scrap-lb" id="lb" role="dialog" aria-modal="true" aria-label="Photo viewer">
+  <button class="close" id="lbClose" aria-label="Close">&times;</button>
+  <button class="nav-btn prev" id="lbPrev" aria-label="Previous">&#8249;</button>
+  <button class="nav-btn next" id="lbNext" aria-label="Next">&#8250;</button>
+  <figure>
+    <div class="lb-stage" id="lbStage"></div>
+    <figcaption><span id="lbCap"></span> <a id="lbDl" class="lb-dl" href="#" target="_blank" rel="noopener">Save</a></figcaption>
+  </figure>
+</div>
+
+<template id="stickers">
+  <img src="{{ url_for('static', filename='img/hunny.webp') }}" alt="">
+  <img src="{{ url_for('static', filename='img/balloon.webp') }}" alt="">
+  <span class="stamp">Hundred<br>Acre<br>Wood</span>
+  <svg viewBox="0 0 60 44" aria-hidden="true"><g transform="translate(30 22) scale(1.6)">{{ art.bee(0,0,1) }}</g></svg>
+  <span class="stamp round">05<br>·12·<br>2026</span>
+</template>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  const book = document.getElementById('book'), empty = document.getElementById('empty'), count = document.getElementById('count');
+  const lb = document.getElementById('lb'), stage = document.getElementById('lbStage'), cap = document.getElementById('lbCap'), dl = document.getElementById('lbDl');
+  const stickers = [...document.getElementById('stickers').content.children];
+  const TAPES = ['honey', 'sage', 'blush', 'sky'];
+  let items = [], idx = 0, seen = new Set(), first = true, show = null;
+
+  // deterministic "random" per item so the page doesn't reshuffle on refresh
+  const rnd = (id, k) => { let h = 2166136261; for (const c of id + k) h = Math.imul(h ^ c.charCodeAt(0), 16777619); return ((h >>> 0) % 1000) / 1000; };
+  const who = it => it.guest || 'A Mystery Heffalump';
+
+  function card(it, n) {
+    const fig = document.createElement('figure');
+    const r = rnd(it.id, 'r'), style = rnd(it.id, 's');
+    fig.className = 'snap ' + (style < .55 ? 'tape' : style < .8 ? 'corners' : 'pin') + (it.kind === 'video' ? ' film' : '');
+    fig.style.setProperty('--tilt', ((r - .5) * 6).toFixed(2) + 'deg');
+    fig.style.setProperty('--tape', `var(--tape-${TAPES[Math.floor(rnd(it.id, 't') * 4)]})`);
+    fig.style.setProperty('--tape-tilt', ((rnd(it.id, 'u') - .5) * 14).toFixed(1) + 'deg');
+    if (!seen.has(it.id) && !first) fig.classList.add('new');
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'pic';
+    b.setAttribute('aria-label', (it.kind === 'video' ? 'Play video' : 'Open photo') + ' from ' + who(it));
+    const img = document.createElement('img');
+    img.loading = n < 8 ? 'eager' : 'lazy';
+    img.alt = (it.kind === 'video' ? 'Video' : 'Photo') + ' from ' + who(it);
+    if (it.w && it.h) { img.width = Math.min(720, it.w); img.height = Math.round(img.width * it.h / it.w); }
+    img.src = `/m/${it.id}/t`;
+    img.onerror = () => { fig.classList.add('developing'); img.remove(); };
+    b.append(img);
+    if (it.kind === 'video') { const p = document.createElement('span'); p.className = 'play'; p.textContent = '▶'; b.append(p); }
+    b.onclick = () => open(items.indexOf(it));
+    const c = document.createElement('figcaption');
+    c.innerHTML = '<span class="who"></span>' + (it.message ? '<span class="msg"></span>' : '');
+    c.querySelector('.who').textContent = '— ' + who(it);
+    if (it.message) c.querySelector('.msg').textContent = it.message;
+    fig.append(b, c);
+    return fig;
+  }
+
+  function sticker(n) {
+    const s = stickers[n % stickers.length].cloneNode(true);
+    const w = document.createElement('div');
+    w.className = 'sticker'; w.setAttribute('aria-hidden', 'true');
+    w.style.setProperty('--tilt', (((n * 37) % 13) - 6) + 'deg');
+    w.append(s);
+    return w;
+  }
+
+  function render() {
+    book.innerHTML = '';
+    items.forEach((it, n) => {
+      book.append(card(it, n));
+      if (n % 7 === 4) book.append(sticker(Math.floor(n / 7)));
+    });
+    items.forEach(it => seen.add(it.id));
+    empty.hidden = items.length > 0;
+    document.getElementById('showBtn').hidden = items.length < 2;
+    const v = items.filter(i => i.kind === 'video').length, p = items.length - v;
+    count.innerHTML = items.length
+      ? `<strong>${p}</strong> photo${p === 1 ? '' : 's'}${v ? ` · <strong>${v}</strong> video${v === 1 ? '' : 's'}` : ''} in the scrapbook`
+      : 'No photos yet';
+    first = false;
+  }
+
+  async function load() {
+    try {
+      const d = await (await fetch('/api/photos', { cache: 'no-store' })).json();
+      const sig = d.items.map(i => i.id).join();
+      if (sig !== items.map(i => i.id).join()) { items = d.items; render(); }
+    } catch (_) { if (first) count.textContent = 'Couldn\'t reach the scrapbook. Pull to refresh in a moment.'; }
+  }
+
+  function open(n) {
+    idx = (n + items.length) % items.length;
+    const it = items[idx];
+    stage.innerHTML = '';
+    if (it.kind === 'video') {
+      const v = document.createElement('video');
+      v.controls = true; v.playsInline = true; v.autoplay = true; v.poster = `/m/${it.id}/t`;
+      v.src = `/m/${it.id}/v`;
+      v.onerror = () => { stage.innerHTML = '<p class="hand developing-note">This little film is still developing. Try again in a minute 🎞️</p>'; };
+      stage.append(v);
+    } else {
+      const img = document.createElement('img');
+      img.src = `/m/${it.id}/f`; img.alt = 'Photo from ' + who(it);
+      stage.append(img);
+    }
+    cap.textContent = who(it) + (it.message ? ' — “' + it.message + '”' : '');
+    dl.href = `/m/${it.id}/d`;
+    lb.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function close() {
+    lb.classList.remove('open'); stage.innerHTML = ''; document.body.style.overflow = '';
+    clearInterval(show); show = null;
+  }
+  document.getElementById('lbClose').onclick = close;
+  document.getElementById('lbPrev').onclick = () => open(idx - 1);
+  document.getElementById('lbNext').onclick = () => open(idx + 1);
+  lb.addEventListener('click', e => { if (e.target === lb || e.target === stage) close(); });
+  document.addEventListener('keydown', e => {
+    if (!lb.classList.contains('open')) return;
+    if (e.key === 'Escape') close();
+    if (e.key === 'ArrowLeft') open(idx - 1);
+    if (e.key === 'ArrowRight') open(idx + 1);
+  });
+  let sx = null;
+  lb.addEventListener('touchstart', e => { sx = e.touches[0].clientX; }, { passive: true });
+  lb.addEventListener('touchend', e => {
+    if (sx === null) return;
+    const dx = e.changedTouches[0].clientX - sx; sx = null;
+    if (Math.abs(dx) > 50) open(idx + (dx < 0 ? 1 : -1));
+  });
+  // Slideshow: photos only, 6s each (great on a TV at the party)
+  document.getElementById('showBtn').onclick = () => {
+    const pics = items.map((it, n) => it.kind === 'photo' ? n : -1).filter(n => n >= 0);
+    if (!pics.length) return;
+    let k = 0; open(pics[0]);
+    show = setInterval(() => { k = (k + 1) % pics.length; open(pics[k]); }, 6000);
+    lb.requestFullscreen?.().catch(() => {});
+  };
+
+  load();
+  setInterval(() => { if (!document.hidden && !lb.classList.contains('open')) load(); }, 30000);
+})();
+</script>
+{% endblock %}

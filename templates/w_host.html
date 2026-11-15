@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+{% import "_art.html" as art %}
+{% block title %}Host desk — {{ EVENT.parents }}'s Baby Shower{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='scrapbook.css') }}">
+<style>
+  .desk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:1rem;margin-top:1rem}
+  .desk-item{background:#FFFEF9;border-radius:10px;box-shadow:var(--shadow-sm);overflow:hidden;display:flex;flex-direction:column}
+  .desk-item .shot{position:relative;aspect-ratio:1;background:#EFE6D2;display:block;padding:0;border:0;cursor:zoom-in}
+  .desk-item .shot img{width:100%;height:100%;object-fit:cover;display:block}
+  .desk-item .shot .tag{position:absolute;left:6px;top:6px;background:rgba(46,36,26,.8);color:#fff;font-size:.72rem;padding:.15rem .45rem;border-radius:99px}
+  .desk-item .meta{padding:.5rem .6rem;font-size:.85rem;flex:1}
+  .desk-item .meta b{font-family:var(--hand);font-size:1rem;font-weight:400}
+  .desk-item .acts{display:flex;border-top:1px solid rgba(75,58,38,.12)}
+  .desk-item .acts button{flex:1;border:0;background:none;padding:.55rem;font:inherit;font-size:.85rem;cursor:pointer}
+  .desk-item .acts .yes{color:var(--sage-deep);font-weight:700}.desk-item .acts .no{color:var(--blush-deep)}
+  .desk-item .acts button:hover{background:var(--paper-2)}
+  .steps{margin:.4rem 0 0;padding-left:1.2rem}.steps li{margin:.25rem 0}
+  .status-dot{display:inline-block;width:.7rem;height:.7rem;border-radius:50%;margin-right:.35rem;background:var(--blush-deep)}
+  .status-dot.on{background:var(--sage-deep)}
+  code.copy{background:var(--paper-2);padding:.15rem .4rem;border-radius:6px;word-break:break-all;cursor:copy}
+  .tabs-row{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:1.2rem}
+  .tabs-row button[aria-selected=true]{background:var(--honey);border-color:var(--honey-deep)}
+</style>{% endblock %}
+
+{% block content %}
+<section class="section" style="padding-top:clamp(2rem,4vw,3rem)">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="chapter">In Which the Hosts Keep Things Tidy</span>
+      <h2>Host desk</h2>
+    </div>
+
+    <!-- sign in -->
+    <div class="narrow" id="login" hidden>
+      <div class="card">
+        <form id="loginForm">
+          <div class="field">
+            <label for="code">Host PIN</label>
+            <input type="password" id="code" autocomplete="current-password" required>
+          </div>
+          <button class="btn btn-primary" type="submit">Open the desk</button>
+          <p class="small muted" style="margin:.8rem 0 0">Hosts only. Your browser stays signed in on this phone for 30 days.</p>
+        </form>
+      </div>
+    </div>
+
+    <!-- desk -->
+    <div id="desk" hidden>
+      <div class="card" id="connect">
+        <h3 style="margin-top:0">Google Photos album</h3>
+        <p id="connState"></p>
+
+        <div id="clientBox" hidden>
+          <p class="small">Step 1 (admin, once). Paste the Google OAuth client from Google Cloud. The redirect URI to register is
+            <code class="copy" id="redir"></code></p>
+          <form id="clientForm" class="g2" style="gap:.8rem">
+            <div class="field"><label for="cid">Client ID</label><input id="cid" placeholder="…apps.googleusercontent.com" required></div>
+            <div class="field"><label for="csec">Client secret</label><input id="csec" type="password" required></div>
+            <div><button class="btn btn-sage btn-sm" type="submit">Save client</button></div>
+          </form>
+        </div>
+
+        <div class="btn-row" style="margin-top:.6rem">
+          <a class="btn btn-primary btn-sm" id="connectBtn" href="/auth/google" hidden>Connect Google Photos</a>
+          <a class="btn btn-ghost btn-sm" id="albumBtn" href="#" target="_blank" rel="noopener" hidden>Open the album in Google Photos</a>
+          <button class="btn btn-ghost btn-sm" id="pauseBtn" type="button" hidden></button>
+        </div>
+        <details style="margin-top:.8rem" id="connectHelp" hidden>
+          <summary class="small"><strong>What happens when you tap Connect?</strong></summary>
+          <ol class="steps small">
+            <li>Sign in with <strong>the parents' Google account</strong> (the one whose Google Photos should keep the album).</li>
+            <li>Google will say <em>“Google hasn't verified this app”</em>. That's normal for a private family site:
+              tap <strong>Advanced</strong> → <strong>Go to … (unsafe)</strong>.</li>
+            <li>Tick the boxes and tap <strong>Continue</strong>. The site can only add to, and read back, the album it creates. It can't see your other photos.</li>
+          </ol>
+        </details>
+        <details style="margin-top:.4rem">
+          <summary class="small"><strong>Sharing the album with family afterwards</strong></summary>
+          <p class="small" style="margin:.4rem 0 0">Open the album in the Google Photos app → <strong>Share</strong> → <strong>Create link</strong>
+            (or add people). Google doesn't let websites share albums for you any more, so this one step is done in the app.</p>
+        </details>
+      </div>
+
+      <div class="tabs-row" role="tablist">
+        <button class="btn btn-ghost btn-sm" role="tab" data-s="pending" aria-selected="true">Waiting <span id="c-pending"></span></button>
+        <button class="btn btn-ghost btn-sm" role="tab" data-s="approved" aria-selected="false">In the scrapbook <span id="c-approved"></span></button>
+        <button class="btn btn-ghost btn-sm" role="tab" data-s="hidden" aria-selected="false">Hidden <span id="c-hidden"></span></button>
+        <button class="btn btn-sage btn-sm" id="allBtn" type="button" style="margin-left:auto" hidden>Approve all on screen</button>
+      </div>
+      <p class="small muted" id="listNote" style="margin:.6rem 0 0"></p>
+      <div class="desk-grid" id="grid"></div>
+
+      <div class="g2" style="margin-top:2rem;gap:1rem">
+        <div class="card">
+          <h3 style="margin-top:0">Hosts' PIN</h3>
+          <p class="small" id="pinState"></p>
+          <form id="pinForm" style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:flex-end">
+            <div class="field" style="flex:1;min-width:12rem;margin:0"><label for="pin">New PIN (6+ characters)</label><input id="pin" minlength="6" required autocomplete="new-password"></div>
+            <button class="btn btn-sage btn-sm" type="submit">Save PIN</button>
+          </form>
+        </div>
+        <div class="card">
+          <h3 style="margin-top:0">Good to know</h3>
+          <ul class="small" style="margin:0;padding-left:1.1rem">
+            <li>Everything guests send is saved in the Google Photos album at full quality, even if you hide it here.</li>
+            <li>Hiding only removes it from this website's scrapbook.</li>
+            <li>Photos sent to the <a href="{{ drive_url }}" target="_blank" rel="noopener">Drive folder</a> need adding to the album by hand.</li>
+            <li>The QR sign to print is at <a href="{{ url_for('sign') }}">/sign</a>.</li>
+          </ul>
+          <button class="btn btn-ghost btn-sm" id="logoutBtn" type="button" style="margin-top:.8rem">Sign out</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="lb scrap-lb" id="lb" role="dialog" aria-modal="true" aria-label="Preview">
+  <button class="close" id="lbClose" aria-label="Close">&times;</button>
+  <figure><div class="lb-stage" id="lbStage"></div><figcaption id="lbCap"></figcaption></figure>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  let state = null, tab = 'pending', items = [];
+  const api = async (url, opts = {}) => {
+    const r = await fetch(url, { ...opts, headers: { 'x-requested-with': 'fetch', 'content-type': 'application/json', ...(opts.headers || {}) } });
+    let d = {}; try { d = await r.json(); } catch (_) {}
+    if (!r.ok) throw new Error(d.error || 'Something went wrong');
+    return d;
+  };
+  const errs = { client: 'Save the Google client first.', denied: 'Google sign-in was cancelled.', state: 'That sign-in link expired. Tap Connect again.',
+    token: 'Google didn\'t hand over a long-term key. Tap Connect again (and make sure the Google Cloud app is published).',
+    scope: 'Please tick the Google Photos boxes on the Google screen and try again.', album: 'Signed in, but Google wouldn\'t create the album. Tap Connect to try again.', session: 'Please sign in to the desk first.' };
+  const qs = new URLSearchParams(location.search);
+  if (qs.get('connected')) setTimeout(() => window.toast('Google Photos connected. Guests can upload now 🎉'), 300);
+  if (qs.get('err')) setTimeout(() => window.toast(errs[qs.get('err')] || 'Something went wrong.'), 300);
+  if (qs.toString()) history.replaceState(null, '', location.pathname);
+
+  async function boot() {
+    state = await api('/api/host/state');
+    $('login').hidden = !!state.role; $('desk').hidden = !state.role;
+    if (!state.role) { $('code').focus(); return; }
+    const s = state;
+    $('connState').innerHTML = s.connected
+      ? `<span class="status-dot on"></span><strong>Connected.</strong> Uploads go straight into the album${s.paused ? ' (uploads are <strong>paused</strong>)' : ''}.`
+      : s.needs_reconnect ? '<span class="status-dot"></span><strong>Google asked us to reconnect.</strong> Tap Connect and sign in with the parents\' account again.'
+      : s.has_client ? '<span class="status-dot"></span><strong>Almost there.</strong> Step 2: tap Connect and sign in with the parents\' Google account.'
+      : '<span class="status-dot"></span><strong>Not set up yet.</strong> ' + (s.role === 'admin' ? 'Start with step 1 below.' : 'The site admin (Ace) needs to do step 1 first.');
+    $('clientBox').hidden = !(s.role === 'admin' && !s.connected);
+    $('redir').textContent = s.redirect_uri;
+    $('connectBtn').hidden = !s.has_client || (s.connected && !s.needs_reconnect);
+    $('connectHelp').hidden = $('connectBtn').hidden;
+    $('connectBtn').textContent = s.needs_reconnect ? 'Reconnect Google Photos' : 'Connect Google Photos';
+    $('albumBtn').hidden = !s.album_url; $('albumBtn').href = s.album_url || '#';
+    $('pauseBtn').hidden = !s.connected; $('pauseBtn').textContent = s.paused ? '▶ Resume uploads' : '⏸ Pause uploads';
+    $('pinState').textContent = s.has_pin ? 'A PIN is set. Saving a new one signs other hosts out.' : 'No PIN yet. Set one and share it with the other hosts.';
+    for (const k of ['pending', 'approved', 'hidden']) $('c-' + k).textContent = '(' + s.counts[k] + ')';
+    await list();
+  }
+
+  async function list() {
+    const d = await api('/api/host/media?status=' + tab);
+    items = d.items;
+    const grid = $('grid'); grid.innerHTML = '';
+    $('allBtn').hidden = tab !== 'pending' || !items.length;
+    $('listNote').textContent = items.length ? '' : { pending: 'Nothing waiting. Lovely.', approved: 'Nothing in the scrapbook yet.', hidden: 'Nothing hidden.' }[tab];
+    items.forEach((it, n) => {
+      const el = document.createElement('div'); el.className = 'desk-item';
+      el.innerHTML = `<button class="shot" type="button"><img loading="lazy" alt=""><span class="tag"></span></button>
+        <div class="meta"><b></b><div class="muted msg"></div></div><div class="acts"></div>`;
+      const img = el.querySelector('img'); img.src = `/m/${it.id}/t`;
+      img.onerror = () => { img.replaceWith(Object.assign(document.createElement('span'), { className: 'hand', textContent: 'developing… 🎞️', style: 'display:grid;place-items:center;height:100%' })); };
+      el.querySelector('.tag').textContent = it.kind === 'video' ? '▶ video' : new Date(it.t * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      el.querySelector('b').textContent = it.guest || 'Mystery Heffalump';
+      el.querySelector('.msg').textContent = it.message || '';
+      el.querySelector(".shot").onclick = () => preview(it);
+      const acts = el.querySelector('.acts');
+      const add = (label, cls, status) => { const b = document.createElement('button'); b.className = cls; b.textContent = label; b.onclick = () => setStatus([it.id], status); acts.append(b); };
+      if (tab !== 'approved') add('✓ Approve', 'yes', 'approved');
+      if (tab !== 'hidden') add('Hide', 'no', 'hidden');
+      if (tab === 'hidden') add('Back to waiting', '', 'pending');
+      grid.append(el);
+    });
+  }
+  async function setStatus(ids, status) {
+    try { await api('/api/host/media', { method: 'POST', body: JSON.stringify({ ids, status }) }); await boot(); }
+    catch (e) { window.toast(e.message); }
+  }
+  function preview(it) {
+    const st = $('lbStage'); st.innerHTML = '';
+    const el = it.kind === 'video' ? Object.assign(document.createElement('video'), { controls: true, autoplay: true, playsInline: true, src: `/m/${it.id}/v` })
+                                   : Object.assign(document.createElement('img'), { src: `/m/${it.id}/f`, alt: '' });
+    if (it.kind === 'video') el.onerror = () => { st.innerHTML = '<p class="hand developing-note">Google is still processing this video. Try again in a minute.</p>'; };
+    st.append(el);
+    $('lbCap').textContent = (it.guest || 'Mystery Heffalump') + (it.message ? ' — “' + it.message + '”' : '') + (it.name ? ' · ' + it.name : '');
+    $('lb').classList.add('open');
+  }
+  const closeLb = () => { $('lb').classList.remove('open'); $('lbStage').innerHTML = ''; };
+  $('lbClose').onclick = closeLb;
+  $('lb').addEventListener('click', e => { if (e.target.id === 'lb' || e.target.id === 'lbStage') closeLb(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLb(); });
+
+  document.querySelectorAll('[role=tab]').forEach(b => b.onclick = () => {
+    tab = b.dataset.s;
+    document.querySelectorAll('[role=tab]').forEach(x => x.setAttribute('aria-selected', x === b));
+    list();
+  });
+  $('allBtn').onclick = () => setStatus(items.map(i => i.id), 'approved');
+  $('loginForm').onsubmit = async e => {
+    e.preventDefault();
+    try { await api('/api/host/login', { method: 'POST', body: JSON.stringify({ code: $('code').value }) }); $('code').value = ''; await boot(); }
+    catch (err) { window.toast(err.message); }
+  };
+  $('clientForm').onsubmit = async e => {
+    e.preventDefault();
+    try { await api('/api/host/google', { method: 'POST', body: JSON.stringify({ client_id: $('cid').value, client_secret: $('csec').value }) });
+      $('csec').value = ''; window.toast('Saved. Now tap Connect Google Photos.'); await boot(); }
+    catch (err) { window.toast(err.message); }
+  };
+  $('pinForm').onsubmit = async e => {
+    e.preventDefault();
+    try { await api('/api/host/pin', { method: 'POST', body: JSON.stringify({ pin: $('pin').value }) }); $('pin').value = ''; window.toast('PIN saved.'); await boot(); }
+    catch (err) { window.toast(err.message); }
+  };
+  $('pauseBtn').onclick = async () => { await api('/api/host/pause', { method: 'POST', body: JSON.stringify({ paused: !state.paused }) }); boot(); };
+  $('logoutBtn').onclick = async () => { await api('/api/host/logout', { method: 'POST' }); boot(); };
+  $('redir').onclick = () => navigator.clipboard?.writeText($('redir').textContent).then(() => window.toast('Copied'));
+  boot().catch(e => window.toast(e.message));
+  setInterval(() => { if (!document.hidden && state && state.role && !$('lb').classList.contains('open')) boot().catch(() => {}); }, 45000);
+})();
+</script>
+{% endblock %}

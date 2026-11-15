@@ -16,7 +16,7 @@ import tempfile
 
 # Set once the real app is live, e.g. "https://daelinnikita.pythonanywhere.com".
 # The preview's buttons and QR then point there. Leave "" until then.
-LIVE_URL = ""
+LIVE_URL = "https://daelin-nikita.aceops.workers.dev"
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DOCS = os.path.join(ROOT, "docs")
