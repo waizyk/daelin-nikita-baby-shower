@@ -35,8 +35,11 @@
       <div class="card">
         <form id="loginForm">
           <div class="field">
-            <label for="code">Host PIN</label>
-            <input type="password" id="code" autocomplete="current-password" required>
+            <label for="code">Host PIN or setup code</label>
+            <div style="display:flex;gap:.5rem;align-items:center">
+              <input type="password" id="code" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" required style="flex:1">
+              <button class="btn btn-ghost btn-sm" type="button" id="showCode" aria-pressed="false">Show</button>
+            </div>
           </div>
           <button class="btn btn-primary" type="submit">Open the desk</button>
           <p class="small muted" style="margin:.8rem 0 0">Hosts only. Your browser stays signed in on this phone for 30 days.</p>
@@ -257,6 +260,10 @@
       window.toast('Everything is in Google Photos now.');
     } catch (e) { window.toast(e.message + ' Tap the button to carry on.'); }
     b.disabled = false; boot();
+  };
+  $('showCode').onclick = () => {
+    const i = $('code'), on = i.type === 'password';
+    i.type = on ? 'text' : 'password'; $('showCode').textContent = on ? 'Hide' : 'Show'; $('showCode').setAttribute('aria-pressed', on);
   };
   $('logoutBtn').onclick = async () => { await api('/api/host/logout', { method: 'POST' }); boot(); };
   $('redir').onclick = () => navigator.clipboard?.writeText($('redir').textContent).then(() => window.toast('Copied'));
