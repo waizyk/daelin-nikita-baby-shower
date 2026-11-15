@@ -7,7 +7,8 @@
   <div class="narrow">
 
     <div class="section-head">
-      <p class="eyebrow">Guest uploads</p>
+      <img class="up-hero float-slow" src="{{ url_for('static', filename='img/balloon.webp') }}" width="460" height="690" alt="">
+      <span class="chapter">In Which You Add Your Photographs</span>
       <h2>Add your photos</h2>
       <p>Thank you for being part of {{ EVENT.parents }}'s day. Pop your pictures in below —
         a host will approve them and they'll appear in the album.</p>
@@ -16,12 +17,7 @@
     <div class="card">
       <div class="drop" id="drop" tabindex="0" role="button"
            aria-label="Choose photos or drag and drop them here">
-        <svg viewBox="0 0 64 64" aria-hidden="true">
-          <rect x="4" y="14" width="56" height="40" rx="10" fill="#E4EEDF" stroke="#8FAE86" stroke-width="2.5"/>
-          <circle cx="32" cy="34" r="11" fill="#FFFCF4" stroke="#8FAE86" stroke-width="2.5"/>
-          <circle cx="32" cy="34" r="5" fill="#E8B04B"/>
-          <rect x="22" y="8" width="20" height="9" rx="4" fill="#FDF3D6" stroke="#8FAE86" stroke-width="2.5"/>
-        </svg>
+        {{ art.icon('camera') }}
         <p style="margin:0 0 .2rem"><strong>Tap to choose photos</strong> — or drag them here</p>
         <p class="small muted" style="margin:0">JPEG, PNG, WebP or iPhone HEIC · up to {{ max_photos }} at a time</p>
       </div>
@@ -31,7 +27,7 @@
 
       <form id="form" style="margin-top:1.3rem" novalidate>
         <div class="field">
-          <label for="guest">Your name <span class="muted">(or leave it and we'll call you Anonymous Pooh)</span></label>
+          <label for="guest">Your name <span class="muted">(or leave it, and we'll call you a Mystery Heffalump)</span></label>
           <input type="text" id="guest" name="guest" maxlength="60" placeholder="e.g. Thandi Mkhize" autocomplete="name">
         </div>
         <div class="field">

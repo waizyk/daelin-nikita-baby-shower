@@ -11,8 +11,15 @@ A complete little website for the baby shower on **Saturday, 5 December 2026**:
 | `/host/zip` | Downloads every approved photo in one zip |
 | `/sign` | A printable A5/A4 "scan me" sign for the party table (with the real QR) |
 
-Everything is themed pastel Winnie the Pooh with hand-drawn SVG illustrations,
-no external images or fonts, so it works offline and loads instantly.
+Everything is themed like the classic storybook Winnie-the-Pooh: watercolour
+illustrations, a hand-drawn "100 Aker Wood" map, "In Which..." chapter headings,
+honey drips and hand-lettered notes. All images and fonts are self-hosted in
+`static/` (nothing loads from the internet), so it still works on flaky venue wifi.
+
+- Illustrations (`static/img/`) are original artwork made for this site in the
+  classic pen-and-watercolour storybook style. They are not Disney artwork.
+- Fonts: IM Fell English and Patrick Hand, both SIL Open Font License (licences in
+  `static/fonts/`).
 
 ---
 

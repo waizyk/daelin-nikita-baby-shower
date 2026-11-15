@@ -1,4 +1,3 @@
-{% import "_art.html" as art %}
 <!doctype html>
 <html lang="en">
 <head>
@@ -7,87 +6,78 @@
 <meta name="robots" content="noindex, nofollow">
 <title>Printable sign — add your photos</title>
 <style>
+  @font-face{font-family:"Fell";src:url("{{ url_for('static', filename='fonts/fell-english.woff2') }}") format("woff2")}
+  @font-face{font-family:"Fell";font-style:italic;src:url("{{ url_for('static', filename='fonts/fell-english-italic.woff2') }}") format("woff2")}
+  @font-face{font-family:"Pooh Hand";src:url("{{ url_for('static', filename='fonts/patrick-hand.woff2') }}") format("woff2")}
   :root{
-    --cream:#FFFCF4; --butter:#FDF3D6; --butter-deep:#F7E4AE; --honey:#E8B04B; --honey-deep:#C8892B;
-    --sage:#8FAE86; --sage-pale:#E4EEDF; --blush:#F3C9C3; --ink:#4A3E31; --ink-soft:#7A6A59;
-    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
-    --sans:ui-rounded,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    --paper:#FBF3E0; --card:#FFFCF3; --honey:#E7AE45; --honey-deep:#B57A1F; --honey-pale:#FBE7B5;
+    --sage-deep:#566F4A; --ink:#4B3A26; --ink-soft:#7B6650;
+    --serif:"Fell","Iowan Old Style",Palatino,Georgia,serif;
+    --hand:"Pooh Hand","Bradley Hand","Comic Sans MS",cursive;
   }
   *,*::before,*::after{box-sizing:border-box}
-  body{margin:0;background:#EFEAE0;font-family:var(--sans);color:var(--ink);
+  html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body{margin:0;background:#E9E1D0;font-family:var(--serif);color:var(--ink);
        display:grid;place-items:center;min-height:100vh;padding:24px}
   .sheet{
-    width:210mm;min-height:297mm;background:var(--cream);position:relative;
-    padding:18mm 16mm;display:flex;flex-direction:column;align-items:center;justify-content:center;
-    text-align:center;box-shadow:0 20px 50px -20px rgba(74,62,49,.5);overflow:hidden;
+    width:210mm;height:297mm;background:var(--paper);position:relative;overflow:hidden;
+    padding:14mm 16mm 12mm;display:flex;flex-direction:column;align-items:center;
+    text-align:center;box-shadow:0 20px 50px -20px rgba(75,58,38,.5);
   }
-  .sheet::before{
-    content:"";position:absolute;inset:7mm;border:2px dashed var(--butter-deep);border-radius:10mm;
-  }
-  .inner{position:relative;z-index:2;width:100%}
-  .eyebrow{font-size:10.5pt;letter-spacing:.3em;text-transform:uppercase;color:var(--honey-deep);
-           font-weight:700;margin:0 0 6mm}
-  h1{font-family:var(--serif);font-size:30pt;line-height:1.15;margin:0 0 3mm}
+  .sheet::before{content:"";position:absolute;inset:6mm;border:1.6px solid rgba(75,58,38,.55);
+    border-radius:60mm 6mm 55mm 6mm/6mm 55mm 6mm 60mm;pointer-events:none}
+  .sheet::after{content:"";position:absolute;inset:8.5mm;border:1px dashed rgba(181,122,31,.5);
+    border-radius:58mm 5mm 52mm 5mm/5mm 52mm 5mm 58mm;pointer-events:none}
+  .drips{position:absolute;left:0;right:0;top:0;height:12mm;
+    background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='24'%3E%3Cpath d='M0 0H160V5C150 5 148 6 147 9C146 13 146 17 143 17C140 17 140 13 139 9C138 6 134 5 120 5C104 5 102 6 101 8C100 11 100 22 96 22C92 22 92 11 91 8C90 6 86 5 70 5C56 5 54 6 53 8C52 10 52 13 49.5 13C47 13 47 10 46 8C45 6 40 5 26 5C16 5 14 6 13 9C12 12 12 15 9.5 15C7 15 7 12 6 9C5 6 3 5 0 5Z' fill='%23E7AE45'/%3E%3C/svg%3E") repeat-x 0 0/auto 12mm}
+  .eyebrow{font-family:var(--hand);font-size:15pt;color:var(--honey-deep);margin:9mm 0 1mm}
+  h1{font-family:var(--serif);font-weight:400;font-size:33pt;line-height:1.05;margin:0 0 1.5mm}
   h1 em{color:var(--honey-deep)}
-  .sub{font-family:var(--serif);font-style:italic;font-size:14pt;color:var(--sage);margin:0 0 9mm}
-  .qrbox{background:#fff;padding:7mm;border-radius:8mm;display:inline-block;
-         box-shadow:0 10px 26px -14px rgba(74,62,49,.55);border:1px solid rgba(143,174,134,.25)}
-  .qrbox img{display:block;width:82mm;height:82mm}
-  .how{margin:9mm 0 0;font-size:13.5pt;line-height:1.7;max-width:130mm}
-  .how b{color:var(--honey-deep)}
-  .url{margin:6mm 0 0;font-size:10.5pt;color:var(--ink-soft);word-break:break-all}
-  .url code{background:var(--butter);padding:1.5mm 3mm;border-radius:2mm}
-  .deco{position:absolute;opacity:.9}
-  .d1{top:-8mm;left:-8mm;width:52mm;transform:rotate(-12deg)}
-  .d2{bottom:-4mm;right:-2mm;width:44mm}
-  .d3{top:16mm;right:14mm;width:20mm}
-  .d4{bottom:34mm;left:14mm;width:17mm}
-  .row{display:flex;gap:6mm;justify-content:center;margin-top:10mm;align-items:flex-end}
-  .row svg{width:26mm}
-  .tabs-hint{display:none}
+  .sub{font-family:var(--serif);font-style:italic;font-size:14pt;color:var(--sage-deep);margin:0 0 4mm}
+  .hero{width:118mm;height:auto;margin:0 0 2mm}
+  .qrbox{background:#fff;padding:5mm;display:inline-block;transform:rotate(-1deg);
+    border:1.6px solid rgba(75,58,38,.55);border-radius:4mm 8mm 5mm 9mm;box-shadow:1.2mm 1.6mm 0 rgba(181,122,31,.25)}
+  .qrbox img{display:block;width:66mm;height:66mm}
+  .how{margin:5mm 0 0;font-family:var(--hand);font-size:17pt;line-height:1.45}
+  .how b{color:var(--honey-deep);font-weight:400}
+  .url{margin:2.5mm 0 0;font-family:var(--hand);font-size:12pt;color:var(--ink-soft);word-break:break-all}
+  .url code{font-family:inherit;background:var(--honey-pale);padding:.4mm 3mm;border-radius:2mm}
+  .friends{width:78mm;height:auto;margin-top:auto}
   .printbtn{
-    position:fixed;top:16px;right:16px;background:var(--honey);color:#fff;border:0;
-    padding:12px 20px;border-radius:999px;font-size:14px;font-weight:600;cursor:pointer;
-    font-family:var(--sans);box-shadow:0 10px 22px -12px rgba(200,137,43,.9);
+    position:fixed;top:16px;right:16px;background:var(--honey);color:#3A2914;border:2px solid var(--ink);
+    padding:10px 20px;border-radius:14px 22px 16px 24px;font-size:17px;cursor:pointer;
+    font-family:var(--hand);box-shadow:3px 4px 0 var(--ink);
   }
   @media print{
-    body{background:#fff;padding:0;display:block}
-    .sheet{box-shadow:none;width:auto;min-height:auto;height:100vh;page-break-after:avoid}
+    body{background:#fff;padding:0;display:block;min-height:0}
+    .sheet{box-shadow:none;width:210mm;height:296mm}
     .printbtn{display:none}
     @page{size:A4 portrait;margin:0}
   }
 </style>
 </head>
 <body>
-<button class="printbtn" onclick="window.print()">🖨 Print this sign</button>
+<button class="printbtn" onclick="window.print()">Print this sign</button>
 
 <div class="sheet">
-  <svg class="deco d1" viewBox="0 0 220 240" aria-hidden="true">{{ art.pooh() }}</svg>
-  <svg class="deco d2" viewBox="0 0 100 140" aria-hidden="true">{{ art.piglet() }}</svg>
-  <svg class="deco d3" viewBox="0 0 40 40" aria-hidden="true">{{ art.bee(20,20,1.6) }}</svg>
-  <svg class="deco d4" viewBox="0 0 40 40" aria-hidden="true">{{ art.bee(20,20,1.3) }}</svg>
+  <div class="drips" aria-hidden="true"></div>
 
-  <div class="inner">
-    <p class="eyebrow">A Hundred Acre Wood Baby Shower</p>
-    <h1>Share your <em>snaps</em><br>with the parents-to-be</h1>
-    <p class="sub">{{ EVENT.parents }} · {{ EVENT.date_long }}</p>
+  <p class="eyebrow">~ a Hundred Acre Wood baby shower ~</p>
+  <h1>Share your <em>photographs</em></h1>
+  <p class="sub">{{ EVENT.parents }} · {{ EVENT.date_long }}</p>
 
-    <div class="qrbox">
-      <img src="{{ url_for('qr_png') }}" alt="QR code to the photo upload page">
-    </div>
+  <img class="hero" src="{{ url_for('static', filename='img/hero.webp') }}" alt="">
 
-    <p class="how">
-      <b>1.</b> Open your camera &nbsp;·&nbsp; <b>2.</b> Point it at the code<br>
-      <b>3.</b> Add your photos of the day
-    </p>
-    <p class="url">or type <code>{{ upload_url }}</code></p>
-
-    <div class="row" aria-hidden="true">
-      <svg viewBox="0 0 120 110">{{ art.piglet() }}</svg>
-      <svg viewBox="0 0 120 110">{{ art.donkey() }}</svg>
-      <svg viewBox="0 0 60 60">{{ art.hunny() }}</svg>
-    </div>
+  <div class="qrbox">
+    <img src="{{ url_for('qr_png') }}" alt="QR code to the photo upload page">
   </div>
+
+  <p class="how">
+    <b>1.</b> Open your camera &nbsp;·&nbsp; <b>2.</b> Point it at the code &nbsp;·&nbsp; <b>3.</b> Add your photos
+  </p>
+  <p class="url">or type <code>{{ upload_url }}</code></p>
+
+  <img class="friends" src="{{ url_for('static', filename='img/friends.webp') }}" alt="">
 </div>
 </body>
 </html>

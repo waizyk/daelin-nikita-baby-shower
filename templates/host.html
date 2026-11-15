@@ -36,7 +36,7 @@
     </div>
   {% else %}
     <div class="empty" style="padding:2rem">
-      <svg viewBox="0 0 220 240" aria-hidden="true" style="width:80px">{{ art.pooh() }}</svg>
+      <img src="{{ url_for('static', filename='img/hunny.webp') }}" width="420" height="420" style="width:80px;margin:0 auto .4rem" alt="">
       <p class="muted" style="margin:0">{{ empty_msg }}</p>
     </div>
   {% endif %}

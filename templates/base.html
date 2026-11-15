@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{% block title %}{{ EVENT.parents }} — Baby Shower{% endblock %}</title>
 <meta name="description" content="{{ EVENT.parents }}'s Winnie the Pooh baby shower — {{ EVENT.date_long }}. Browse the photo album and add your own photos.">
-<meta name="theme-color" content="#FFFCF4">
+<meta name="theme-color" content="#FBF3E0">
 <meta name="robots" content="noindex, nofollow">
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍯</text></svg>">
@@ -17,8 +17,8 @@
 <header class="nav">
   <div class="wrap nav-in">
     <a class="brand" href="{{ url_for('index') }}">
-      <svg viewBox="0 0 40 40" aria-hidden="true">{{ art.hunny() }}</svg>
-      <span>{{ EVENT.parents }}<small>Baby Shower · {{ EVENT.date_short }}</small></span>
+      <img src="{{ url_for('static', filename='img/hunny.webp') }}" width="38" height="38" alt="">
+      <span>{{ EVENT.parents }}<small>baby shower · {{ EVENT.date_short }}</small></span>
     </a>
     <nav class="nav-links" aria-label="Main">
       <a href="{{ url_for('index') }}" {% if page=='home' %}class="active"{% endif %}>The Shower</a>
@@ -41,10 +41,10 @@
   <div class="wrap footer-grid">
     <div>
       <a class="brand" href="{{ url_for('index') }}" style="margin-bottom:.5rem">
-        <svg viewBox="0 0 40 40" aria-hidden="true">{{ art.hunny() }}</svg>
+        <img src="{{ url_for('static', filename='img/hunny.webp') }}" width="38" height="38" alt="">
         <span>{{ EVENT.parents }}<small>{{ EVENT.date_long }}</small></span>
       </a>
-      <p class="fine">Made with honey and love for the littlest Hundred Acre Wood resident.</p>
+      <p class="fine">Made with hunny and love for the littlest Hundred Acre Wood resident.</p>
     </div>
     <div class="bees" aria-hidden="true">
       {{ art.bee(0,0,1.1) }}{{ art.bee(0,0,0.8) }}{{ art.bee(0,0,1.3) }}

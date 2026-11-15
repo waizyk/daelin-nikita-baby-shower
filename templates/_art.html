@@ -127,3 +127,52 @@
   {% endfor %}
 </g>
 {% endmacro %}
+
+{# Hand-drawn line icons (24x24) for the invitation details #}
+{% macro icon(name) %}
+<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="#4B3A26" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+{% if name == 'date' %}
+  <path d="M4.5 6.5c3-.4 12-.5 15 .1.4 4 .3 9-.1 12.9-4 .3-11 .4-14.8-.1-.4-4-.4-9 0-12.9z" fill="#FBE7B5"/>
+  <path d="M4.6 10.2c4.6-.3 10.2-.3 14.8.1M8.5 4.3v4M15.5 4.3v4"/><path d="M9.3 14.4l1.8 1.8 3.8-3.6" stroke="#B57A1F"/>
+{% elif name == 'time' %}
+  <path d="M12 3.6c4.9-.2 8.6 3.6 8.4 8.6-.2 4.6-4 8.3-8.6 8.2-4.7-.1-8.3-3.9-8.2-8.5C3.7 7.3 7.3 3.7 12 3.6z" fill="#FBE7B5"/>
+  <path d="M12 7.4v5l3.2 2.1"/>
+{% elif name == 'venue' %}
+  <path d="M3.5 20.4c5.5-.4 11.5-.4 17 0" stroke="#566F4A"/>
+  <path d="M6.6 20.2c-.6-5.6.6-11.6 5.4-14.4 4.6 2.8 5.8 8.8 5.2 14.4" fill="#C9DDBA"/>
+  <path d="M9.7 20.2c-.2-3 .3-5.6 2.3-6.6 2 1 2.5 3.6 2.3 6.6" fill="#8DA77F"/><circle cx="13.3" cy="17.6" r=".5" fill="#4B3A26"/>
+{% elif name == 'theme' %}
+  <path d="M12 3.4c3.5 0 5.8 2.6 5.6 5.9-.2 3.6-3 6.4-5.6 6.5-2.7-.1-5.4-2.9-5.6-6.5C6.2 6 8.5 3.4 12 3.4z" fill="#C6DCE8"/>
+  <path d="M11.2 15.8l.8 1 .8-1M12 16.8c-1.2 1.4 1.4 2.4-.2 4.2"/><path d="M9.4 6.8c.6-.9 1.4-1.3 2.3-1.4" stroke="#fff" stroke-width="1.4"/>
+{% elif name == 'dress' %}
+  <path d="M12 7.6c-.1-1.3.4-2.8 2-2.6 1.2.2 1.4 2-.4 2.7L12 8.6 3.8 15.6c-.6.6-.3 1.5.5 1.5h15.4c.8 0 1.1-.9.5-1.5L12 8.6"/>
+{% elif name == 'rsvp' %}
+  <path d="M3.6 7c5.5-.5 11.3-.5 16.8 0 .3 3.6.2 7.4-.1 11-5.5.4-11 .4-16.6 0-.4-3.6-.4-7.4-.1-11z" fill="#FFFCF3"/>
+  <path d="M3.8 7.3c2.6 2.4 5.3 4.6 8.2 5.8 2.9-1.2 5.6-3.4 8.2-5.8"/><circle cx="12" cy="13.6" r="1.6" fill="#C47767" stroke="#C47767"/>
+{% elif name == 'by' %}
+  <path d="M15.6 4.6l3.8 3.8-10.6 10.6-4.6.9.9-4.6z" fill="#FBE7B5"/><path d="M13.6 6.6l3.8 3.8M5.1 15.3l3.6 3.6"/>
+{% elif name == 'hosts' %}
+  <path d="M12 19.6c-4-2.8-7.6-5.6-7.8-9.4-.1-2.6 1.9-4.6 4.2-4.6 1.6 0 2.8.9 3.6 2.2.8-1.3 2-2.2 3.6-2.2 2.3 0 4.3 2 4.2 4.6-.2 3.8-3.8 6.6-7.8 9.4z" fill="#F0C3B8"/>
+{% elif name == 'gift' %}
+  <path d="M4.4 10c5-.3 10.2-.3 15.2 0 .2 3.4.2 6.9-.1 10.3-5 .3-10 .3-15 0-.3-3.4-.3-6.9-.1-10.3z" fill="#FBE7B5"/>
+  <path d="M3.6 7.4c5.6-.3 11.2-.3 16.8 0v2.7c-5.6.3-11.2.3-16.8 0zM12 7.4v13"/><path d="M12 7.3C10.6 4.4 7.4 4 7.6 5.8 7.8 7.2 10.2 7.4 12 7.3c1.4-2.9 4.6-3.3 4.4-1.5-.2 1.4-2.6 1.6-4.4 1.5z"/>
+{% elif name == 'camera' %}
+  <path d="M3.6 8.3c5.6-.4 11.2-.4 16.8 0 .3 3.6.3 7.4-.1 11-5.5.3-11 .3-16.6 0-.4-3.6-.4-7.4-.1-11z" fill="#FBE7B5"/><path d="M8.6 8.2l1.4-2.6h4l1.4 2.6"/>
+  <circle cx="12" cy="13.6" r="3.3" fill="#FFFCF3"/>
+{% endif %}
+</svg>
+{% endmacro %}
+
+{# bee trail divider #}
+{% macro trail() %}
+<svg class="trail" viewBox="0 0 420 46" aria-hidden="true">
+  <path d="M10 30 C 70 6, 120 44, 180 24 S 290 6, 340 26" fill="none" stroke="#B57A1F" stroke-width="2" stroke-dasharray="1 9" stroke-linecap="round"/>
+  <g transform="translate(372 22) rotate(-12)">
+    <ellipse cx="0" cy="0" rx="11" ry="8" fill="#F2C24E" stroke="#4B3A26" stroke-width="1.6"/>
+    <path d="M-3 -7.6 Q-1 0 -3 7.6 M3 -7 Q5 0 3 7" stroke="#4B3A26" stroke-width="2" fill="none"/>
+    <ellipse cx="-4" cy="-10" rx="6" ry="4" fill="#fff" fill-opacity=".8" stroke="#4B3A26" stroke-width="1.2" transform="rotate(-25 -4 -10)"/>
+    <ellipse cx="3" cy="-11" rx="5" ry="3.5" fill="#fff" fill-opacity=".8" stroke="#4B3A26" stroke-width="1.2" transform="rotate(20 3 -11)"/>
+    <circle cx="9" cy="-2" r="1.3" fill="#4B3A26"/>
+  </g>
+</svg>
+{% endmacro %}

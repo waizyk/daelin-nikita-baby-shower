@@ -7,7 +7,7 @@
   <div class="narrow" style="max-width:460px">
     <div class="card">
       <div style="text-align:center;margin-bottom:1.2rem">
-        <svg viewBox="0 0 220 240" style="width:112px;margin:0 auto" aria-hidden="true">{{ art.pooh() }}</svg>
+        <img src="{{ url_for('static', filename='img/hunny.webp') }}" width="420" height="420" style="width:110px;margin:0 auto" alt="">
         <p class="eyebrow" style="margin-top:.6rem">Hosts only</p>
         <h2 style="margin-bottom:.3rem">The host desk</h2>
         <p class="muted small">Approve or decline photos before they appear in the album.</p>
@@ -24,7 +24,7 @@
         <button class="btn btn-sage" type="submit" style="width:100%">Unlock</button>
       </form>
       <p class="small muted center" style="margin:1rem 0 0">
-        Lost the PIN? It's set in <code>config.py</code> as <code>HOST_PIN</code>.
+        Lost the PIN? Ask whoever set up the site. It's the <code>HOST_PIN</code> setting on the server.
       </p>
     </div>
   </div>

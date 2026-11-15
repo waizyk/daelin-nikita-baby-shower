@@ -212,13 +212,47 @@ def test_pin_comes_from_env(monkeypatch):
 EXTERNAL = re.compile(r"""(?:src|href)\s*=\s*["'](https?:)?//""", re.I)
 
 
+TEXT_EXT = (".html", ".css", ".js", ".txt", ".svg")
+
+
+def text_files():
+    for folder in ("templates", "static"):
+        for dirpath, _, names in os.walk(os.path.join(ROOT, folder)):
+            for name in names:
+                if name.endswith(TEXT_EXT) and not name.startswith("OFL"):
+                    yield os.path.join(dirpath, name)
+
+
 def test_no_external_assets_in_source():
     """No CDNs, web fonts or trackers: the venue wifi may be flaky."""
-    for folder in ("templates", "static"):
-        for name in os.listdir(os.path.join(ROOT, folder)):
-            text = open(os.path.join(ROOT, folder, name), encoding="utf-8").read()
-            assert not EXTERNAL.search(text), f"external asset in {folder}/{name}"
-            assert "@import url(" not in text and "googleapis" not in text
+    files = list(text_files())
+    assert files
+    for path in files:
+        text = open(path, encoding="utf-8").read()
+        assert not EXTERNAL.search(text), f"external asset in {path}"
+        assert "@import url(" not in text and "googleapis" not in text
+        for m in re.finditer(r"url\(([^)]*)\)", text):
+            target = m.group(1).strip("'\" ")
+            assert not re.match(r"(https?:)?//", target), f"external url() in {path}"
+
+
+@pytest.mark.parametrize("path", ["/", "/photos", "/upload", "/sign", "/host"])
+def test_every_local_asset_resolves(client, path):
+    """Every image, font and stylesheet a page uses is served by the app itself."""
+    html = client.get(path).get_data(as_text=True)
+    assets = set(re.findall(r'(?:src|href)="(/static/[^"]+|/qr\.(?:svg|png))"', html))
+    css = client.get("/static/style.css").get_data(as_text=True)
+    assets |= {"/static/" + u.strip("'\"") for u in re.findall(r"url\(((?:fonts|img)/[^)]+)\)", css)}
+    assert assets
+    for a in assets:
+        assert client.get(a).status_code == 200, a
+
+
+def test_storybook_illustrations_present(client):
+    html = client.get("/").get_data(as_text=True)
+    for img in ("hero.webp", "map.webp", "balloon.webp", "friends.webp"):
+        assert f"/static/img/{img}" in html
+    assert "In Which" in html and "100 Aker Wood" in html
 
 
 @pytest.mark.parametrize("path", ["/", "/photos", "/upload", "/sign"])

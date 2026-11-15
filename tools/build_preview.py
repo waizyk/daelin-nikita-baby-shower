@@ -72,7 +72,9 @@ def main():
         with open(os.path.join(DOCS, name), "w", encoding="utf-8") as f:
             f.write(html)
 
-    shutil.copy(os.path.join(ROOT, "static", "style.css"), DOCS)
+    # style.css, fonts/ and img/ (robots.txt is written below)
+    shutil.copytree(os.path.join(ROOT, "static"), DOCS, dirs_exist_ok=True,
+                    ignore=shutil.ignore_patterns("robots.txt"))
     buf = io.BytesIO()
     qrcode.make(qr_target, image_factory=qrcode.image.svg.SvgPathImage,
                 box_size=12, border=2).save(buf)

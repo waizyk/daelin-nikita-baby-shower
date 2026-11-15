@@ -7,7 +7,7 @@
   <div class="wrap">
 
     <div class="section-head">
-      <p class="eyebrow">Hundred Acre Wood memories</p>
+      <span class="chapter">In Which Everybody Remembers the Day</span>
       <h2>The Photo Album</h2>
       <p>Every photo here was added by a guest and approved by a host. Tap any picture to see it bigger.</p>
     </div>
@@ -16,7 +16,7 @@
       <span class="small"><strong>{{ photos|length }}</strong> photo{{ '' if photos|length == 1 else 's' }} in the album</span>
       {% if auto_approve %}<span class="small muted">· photos appear instantly</span>{% endif %}
       <div style="margin-left:auto" class="btn-row">
-        <a class="btn btn-primary btn-sm" href="{{ url_for('upload_page') }}">📷 Add your photos</a>
+        <a class="btn btn-primary btn-sm" href="{{ url_for('upload_page') }}">Add your photos</a>
         <button class="btn btn-ghost btn-sm" type="button" onclick="location.reload()">↻ Refresh</button>
         {% if is_host %}
           <a class="btn btn-ghost btn-sm" href="{{ url_for('host') }}">Host desk{% if pending_count %} · {{ pending_count }} waiting{% endif %}</a>
@@ -45,11 +45,11 @@
       </div>
     {% else %}
       <div class="empty">
-        <svg viewBox="0 0 220 240" aria-hidden="true">{{ art.pooh() }}</svg>
-        <h3>An empty album — for now</h3>
+        <img src="{{ url_for('static', filename='img/hunny.webp') }}" width="420" height="420" alt="">
+        <h3>An empty album, for now</h3>
         <p class="muted" style="max-width:42ch;margin-inline:auto">
           The pages are waiting for the first photographs. Be the very first guest to add one —
-          Pooh says a picture is worth a thousand honey pots.
+          a picture is worth a thousand hunny pots.
         </p>
         <p class="small muted" style="max-width:40ch;margin-inline:auto">
           Just uploaded? Your photos will appear here as soon as a host approves them.
