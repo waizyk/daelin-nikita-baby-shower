@@ -29,7 +29,7 @@ def jpg(src, w=None, crop=None, bg=(250, 240, 220)):
 
 
 def big_jpg():                       # a "phone photo": 4000 px, ~3+ MB, gets shrunk in site-storage mode
-    im = Image.open(os.path.join(ROOT, "static", "img", "hero-red.webp")).convert("RGB").resize((4000, 2668))
+    im = Image.open(os.path.join(ROOT, "static", "img", "bear-hero.webp")).convert("RGB").resize((4000, 2668))
     noise = Image.effect_noise((4000, 2668), 40).convert("RGB")
     im = Image.blend(im, noise, .12)
     b = io.BytesIO(); im.save(b, "JPEG", quality=95); return b.getvalue()
@@ -50,10 +50,10 @@ VIDEO = real_video()
 VIDEO_LEN = len(VIDEO)
 FILES = [
     {"name": "IMG_2041.jpg", "mimeType": "image/jpeg", "buffer": big_jpg()},
-    {"name": "IMG_2042.jpg", "mimeType": "image/jpeg", "buffer": jpg("friends-red.webp", 1000)},
+    {"name": "IMG_2042.jpg", "mimeType": "image/jpeg", "buffer": jpg("bear-friends.webp", 1000)},
     {"name": "IMG_2043.jpg", "mimeType": "image/jpeg", "buffer": jpg("map.webp", 700, (100, 100, 700, 819))},
     {"name": "cake-smash.webm", "mimeType": "video/webm", "buffer": VIDEO},
-    {"name": "IMG_2044.jpg", "mimeType": "image/jpeg", "buffer": jpg("balloon-red.webp", 600)},
+    {"name": "IMG_2044.jpg", "mimeType": "image/jpeg", "buffer": jpg("bear-balloon.webp", 600)},
     {"name": "menu.pdf", "mimeType": "application/pdf", "buffer": b"%PDF-1.4"},
 ]
 # Large buffers crash Chromium's set_input_files, so the test files go to disk first.
