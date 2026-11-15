@@ -66,19 +66,23 @@
                 </span></span></li>
             <li><span class="ic">{{ art.icon('theme') }}</span>
               <span><span class="k">The theme</span><span class="v">{{ EVENT.theme }}</span></span></li>
+          </ul>
+        </div>
+        <div>
+          <h3>{% if EVENT.rsvp %}RSVP &amp; hosts{% else %}Good to know{% endif %}</h3>
+          <ul class="dl">
+            {% if EVENT.rsvp %}
+            <li><span class="ic">{{ art.icon('rsvp') }}</span>
+              <span><span class="k">Kindly reply to</span><span class="v"><b>{{ EVENT.rsvp|ph }}</b></span></span></li>
+            {% endif %}
+            {% if EVENT.rsvp_by %}
+            <li><span class="ic">{{ art.icon('by') }}</span>
+              <span><span class="k">Please reply by</span><span class="v">{{ EVENT.rsvp_by|ph }}</span></span></li>
+            {% endif %}
             {% if EVENT.dress_code %}
             <li><span class="ic">{{ art.icon('dress') }}</span>
               <span><span class="k">What to wear</span><span class="v">{{ EVENT.dress_code|ph }}</span></span></li>
             {% endif %}
-          </ul>
-        </div>
-        <div>
-          <h3>RSVP &amp; hosts</h3>
-          <ul class="dl">
-            <li><span class="ic">{{ art.icon('rsvp') }}</span>
-              <span><span class="k">Kindly reply to</span><span class="v"><b>{{ EVENT.rsvp|ph }}</b></span></span></li>
-            <li><span class="ic">{{ art.icon('by') }}</span>
-              <span><span class="k">Please reply by</span><span class="v">{{ EVENT.rsvp_by|ph }}</span></span></li>
             <li><span class="ic">{{ art.icon('hosts') }}</span>
               <span><span class="k">Hosted with love by</span><span class="v">{{ EVENT.hosts|ph }}</span></span></li>
             <li><span class="ic">{{ art.icon('gift') }}</span>

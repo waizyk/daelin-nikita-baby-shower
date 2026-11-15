@@ -24,10 +24,11 @@ EVENT = {
 
     # --- party details -----------------------------------------------------
     "theme": "Winnie the Pooh — a Hundred Acre Wood baby shower",
-    "dress_code": "[Dress code — or delete this line]",
+    "dress_code": "Hundred Acre comfy: dress for an expotition to the cake table. "
+                  "Trousers strongly encouraged, even though Pooh never bothers.",
     "hosts": "[Host name(s)]",
-    "rsvp": "[RSVP name & number]",       # e.g. "Thandi 082 123 4567"
-    "rsvp_by": "[RSVP by date]",
+    "rsvp": "",                           # e.g. "Thandi 082 123 4567" (empty = hidden)
+    "rsvp_by": "",                        # empty = hidden
 
     # --- gifts -------------------------------------------------------------
     "registry_url": "",                   # optional registry / gift list link

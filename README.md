@@ -4,7 +4,7 @@ A complete little website for the baby shower on **Saturday, 5 December 2026**:
 
 | Page | What it does |
 |---|---|
-| `/` | The invitation — date, time, venue, RSVP, dress code, gifts, plus a QR code |
+| `/` | The invitation — date, time, venue, map, dress code, hosts, gifts (RSVP optional), plus a QR code |
 | `/photos` | The photo album (only host-approved photos appear here) |
 | `/upload` | Where the QR code sends guests — upload photos straight from a phone |
 | `/host` | Host desk — approve / decline / delete photos (PIN protected) |

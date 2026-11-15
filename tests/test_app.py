@@ -49,6 +49,19 @@ def test_placeholders_are_highlighted(client):
     assert '<span class="ph">' in html
 
 
+def test_rsvp_hidden_when_empty(client, monkeypatch):
+    monkeypatch.setitem(config.EVENT, "rsvp", "")
+    monkeypatch.setitem(config.EVENT, "rsvp_by", "")
+    html = client.get("/").get_data(as_text=True)
+    assert "Kindly reply to" not in html and "Please reply by" not in html
+    monkeypatch.setitem(config.EVENT, "rsvp", "Thandi 082 000 0000")
+    assert "Kindly reply to" in client.get("/").get_data(as_text=True)
+
+
+def test_dress_code_shows(client):
+    assert "expotition" in client.get("/").get_data(as_text=True)
+
+
 def test_robots_blocks_indexing(client):
     assert "Disallow: /" in client.get("/robots.txt").get_data(as_text=True)
 
