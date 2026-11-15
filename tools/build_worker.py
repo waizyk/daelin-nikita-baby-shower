@@ -35,6 +35,7 @@ def main(live=LIVE_URL):
         "upload.html": ("w_upload.html", dict(page="upload", drive_url=ev["drive_url"], max_files=30)),
         "host.html": ("w_host.html", dict(page="host", drive_url=ev["drive_url"])),
         "sign.html": ("sign.html", dict(page="sign", upload_url=live.rstrip("/") + "/upload")),
+        "privacy.html": ("w_privacy.html", dict(page="privacy")),
         "404.html": ("w_404.html", dict(page="404")),
     }
     if os.path.isdir(OUT):

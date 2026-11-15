@@ -68,3 +68,8 @@ def test_uploads_work_before_google_is_connected(built):
     assert 'id="moveBtn"' in host and "/api/host/migrate" in host and "/api/host/delete" in host
     toml = open(os.path.join(ROOT, "worker", "wrangler.toml"), encoding="utf-8").read()
     assert 'binding = "MEDIA"' in toml and "REPLACE_WITH_KV_ID" in toml
+
+
+def test_privacy_page_for_google(built):
+    html = read(built, "privacy.html")
+    assert "Google API Services User Data Policy" in html and "Limited Use" in html
