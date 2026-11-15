@@ -388,10 +388,9 @@ async function route(req, env) {
     const { code } = await readJSON(req);
     const c = String(code || "").trim();
     let role = null;
-    // Setup code: forgiving about dashes, spaces, capitals and phone "smart" dashes (hunny-xxxx-xxxx-xxxx-xxxx).
+    // Setup code: only letters and digits count, so "Let's go fishing!" = "letsgofishing".
     const bare = c.toLowerCase().replace(/[^a-z0-9]/g, "");
-    const setup = bare.length === 21 ? [bare.slice(0, 5), bare.slice(5, 9), bare.slice(9, 13), bare.slice(13, 17), bare.slice(17)].join("-") : c.toLowerCase();
-    if (env.SETUP_HASH && c && same(await sha256(setup), env.SETUP_HASH)) role = "admin";
+    if (env.SETUP_HASH && bare && same(await sha256(bare), env.SETUP_HASH)) role = "admin";
     else {
       const s = await getS(env, "pin_hash", "pin_salt");
       if (s.pin_hash && c && same(await pinHash(c, s.pin_salt), s.pin_hash)) role = "host";

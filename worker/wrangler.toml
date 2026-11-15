@@ -21,9 +21,9 @@ database_id = "REPLACE_WITH_D1_ID"
 [vars]
 ALBUM_TITLE = "Daelin & Nikita's Baby Shower · 5 Dec 2026"
 AUTO_APPROVE = ""
-# SHA-256 of the one-time setup code (the code itself is never committed).
+# SHA-256 of the setup code, lower-case letters and digits only (the code itself is never committed).
 # The code opens the host desk as admin: paste the Google client, connect the album, set the hosts' PIN.
-SETUP_HASH = "2f7030da291dc0ff72eaff4a55e1db0d0b0aef1479a1f02ad52b5cb71222c271"
+SETUP_HASH = "3bbca7807dab63fec249f59a42d56fa0c927326fa39e43cde15ec7301f45d91b"
 
 # Site storage for uploads until Google Photos is connected (Workers KV, free tier: 1 GB, 1,000 writes/day).
 # The host desk copies everything into Google Photos once it's connected, and frees the space.
