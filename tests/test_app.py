@@ -44,9 +44,13 @@ def test_invite_shows_party_facts(client):
     assert "5 December 2026" in html
 
 
-def test_placeholders_are_highlighted(client):
-    html = client.get("/").get_data(as_text=True)
-    assert '<span class="ph">' in html
+def test_placeholders_are_highlighted():
+    assert str(A.ph("At [Venue name] today")) == 'At <span class="ph">Venue name</span> today'
+
+
+def test_placeholder_on_page_is_highlighted(client, monkeypatch):
+    monkeypatch.setitem(config.EVENT, "hosts", "[Host name(s)]")
+    assert '<span class="ph">Host name(s)</span>' in client.get("/").get_data(as_text=True)
 
 
 def test_rsvp_hidden_when_empty(client, monkeypatch):
@@ -60,6 +64,15 @@ def test_rsvp_hidden_when_empty(client, monkeypatch):
 
 def test_dress_code_shows(client):
     assert "expotition" in client.get("/").get_data(as_text=True)
+
+
+def test_footer_credit_is_quiet_link(client):
+    html = client.get("/").get_data(as_text=True)
+    assert re.search(r'Website by <a class="credit" href="https://ace-ops\.aceops\.workers\.dev/"[^>]*>Ace Khan</a>', html)
+
+
+def test_hosts_filled(client):
+    assert "Caitlin Caleb" in client.get("/").get_data(as_text=True)
 
 
 def test_robots_blocks_indexing(client):
@@ -222,7 +235,8 @@ def test_pin_comes_from_env(monkeypatch):
 
 
 # ---------------------------------------------------------------- offline-first
-EXTERNAL = re.compile(r"""(?:src|href)\s*=\s*["'](https?:)?//""", re.I)
+# assets = anything a page LOADS: src="..." and <link href="..."> (plain <a> links are fine)
+EXTERNAL = re.compile(r"""(?:\bsrc\s*=\s*["']|<link\b[^>]*\bhref\s*=\s*["'])(https?:)?//""", re.I)
 
 
 TEXT_EXT = (".html", ".css", ".js", ".txt", ".svg")

@@ -53,6 +53,7 @@
       <a href="{{ url_for('upload_page') }}">Add your photos</a> ·
       <a href="{{ url_for('album') }}">See the album</a>
       {% if is_host %}· <a href="{{ url_for('host') }}">Host desk</a>{% endif %}
+      {% if BUILT_BY %}<br>Website by <a class="credit" href="{{ BUILT_BY.url }}" target="_blank" rel="noopener">{{ BUILT_BY.name }}</a>{% endif %}
     </div>
   </div>
 </footer>

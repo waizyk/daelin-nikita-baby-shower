@@ -160,6 +160,7 @@ def inject_globals():
         except sqlite3.Error:
             stats = None
     return dict(EVENT=config.EVENT, SITE_NAME=config.SITE_NAME,
+                BUILT_BY=getattr(config, "BUILT_BY", None),
                 is_host=host, stats=stats)
 
 

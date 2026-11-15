@@ -26,7 +26,7 @@ EVENT = {
     "theme": "Winnie the Pooh — a Hundred Acre Wood baby shower",
     "dress_code": "Hundred Acre comfy: dress for an expotition to the cake table. "
                   "Trousers strongly encouraged, even though Pooh never bothers.",
-    "hosts": "[Host name(s)]",
+    "hosts": "Caitlin Caleb",
     "rsvp": "",                           # e.g. "Thandi 082 123 4567" (empty = hidden)
     "rsvp_by": "",                        # empty = hidden
 
@@ -61,3 +61,6 @@ PUBLIC_URL = os.environ.get("PUBLIC_URL", "").rstrip("/")
 
 # Shown in the site footer / page titles.
 SITE_NAME = "Daelin & Nikita's Baby Shower"
+
+# Footer credit. The name is a quiet link (looks like plain text).
+BUILT_BY = {"name": "Ace Khan", "url": "https://ace-ops.aceops.workers.dev/"}
