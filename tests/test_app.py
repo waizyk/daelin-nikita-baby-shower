@@ -72,7 +72,7 @@ def test_footer_credit_is_quiet_link(client):
 
 
 def test_hosts_filled(client):
-    assert "Caitlin Caleb" in client.get("/").get_data(as_text=True)
+    assert "Caitlin Caleb &amp; Daynalee Richards" in client.get("/").get_data(as_text=True)
 
 
 def test_robots_blocks_indexing(client):

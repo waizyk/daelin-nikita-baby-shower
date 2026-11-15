@@ -26,7 +26,7 @@ EVENT = {
     "theme": "Winnie the Pooh — a Hundred Acre Wood baby shower",
     "dress_code": "Hundred Acre comfy: dress for an expotition to the cake table. "
                   "Trousers strongly encouraged, even though Pooh never bothers.",
-    "hosts": "Caitlin Caleb",
+    "hosts": "Caitlin Caleb & Daynalee Richards",
     "rsvp": "",                           # e.g. "Thandi 082 123 4567" (empty = hidden)
     "rsvp_by": "",                        # empty = hidden
 
