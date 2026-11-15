@@ -385,8 +385,6 @@ async function route(req, env) {
   // ---- host desk
   if (p === "/api/host/login" && M === "POST") {
     requireXHR(req);
-    if (await limited(env, "login:" + ip(req), LIMITS.loginsPer15m, 900))
-      return bad("Too many tries — wait 15 minutes and try again.", 429);
     const { code } = await readJSON(req);
     const c = String(code || "").trim();
     let role = null;

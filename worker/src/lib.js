@@ -7,8 +7,7 @@ export const LIMITS = {
   kvChunk: 20 * 1024 * 1024,       // site-storage pieces (KV values may be up to 25 MiB)
   kv_photo: 60 * 1024 * 1024,      // while photos are kept on the site (before Google Photos is connected)
   kv_video: 150 * 1024 * 1024,
-  startsPerHour: 150,              // per IP: a whole camera roll is fine, a script is not
-  loginsPer15m: 10,
+  startsPerHour: 2000,     // per IP: guests on the venue Wi-Fi all share one IP              // per IP: a whole camera roll is fine, a script is not
 };
 const VIDEO_EXT = /\.(mp4|mov|m4v|3gp|webm|avi|mkv|mts)$/i;
 const PHOTO_EXT = /\.(jpe?g|png|gif|webp|heic|heif|avif|bmp|tiff?|dng)$/i;
