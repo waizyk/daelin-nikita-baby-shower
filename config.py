@@ -15,12 +15,12 @@ EVENT = {
     # --- when --------------------------------------------------------------
     "date_long": "Saturday, 5 December 2026",
     "date_short": "05 . 12 . 2026",
-    "time": "[Time — e.g. 11:00 for 11:30]",
+    "time": "2:00 pm",
 
     # --- where -------------------------------------------------------------
-    "venue": "[Venue name]",
-    "address": "[Street address, suburb, city]",
-    "map_url": "",                        # optional Google Maps link
+    "venue": "124 View Street",
+    "address": "Overport, Durban",
+    "map_url": "https://www.google.com/maps/search/?api=1&query=124+View+Street%2C+Overport%2C+Durban",
 
     # --- party details -----------------------------------------------------
     "theme": "Winnie the Pooh — a Hundred Acre Wood baby shower",
