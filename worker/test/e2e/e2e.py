@@ -146,6 +146,22 @@ with sync_playwright() as p:
     hp.screenshot(path=OUT + "/5_video.png")
     hp.keyboard.press("Escape")
 
+    # ---------- a junk upload: hide it, then delete it for good from the Hidden tab
+    junk = FILES[4]["buffer"]
+    st0 = hp.request.post(B + "/api/upload/start", headers=H, data=json.dumps({"name": "junk.jpg", "size": len(junk), "type": "image/jpeg"})).json()
+    hp.request.put(B + f"/api/upload/{st0['id']}?offset=0", headers={"x-requested-with": "fetch"}, data=junk)
+    jid = hp.request.get(B + "/api/host/media?status=pending").json()["items"][0]["id"]
+    r = hp.request.post(B + "/api/host/delete", headers=H, data=json.dumps({"id": jid}))
+    ok(r.status == 409, "can't delete without hiding first")
+    hp.request.post(B + "/api/host/media", headers=H, data=json.dumps({"ids": [jid], "status": "hidden"}))
+    hp.goto(B + "/host"); hp.wait_for_selector("#desk:not([hidden])"); hp.wait_for_timeout(800)
+    hp.click("[data-s=hidden]"); hp.wait_for_timeout(800)
+    hp.once("dialog", lambda d: d.accept())
+    hp.locator(".desk-item .acts button", has_text="Delete").first.click(); hp.wait_for_timeout(1200)
+    st = hp.request.get(B + "/api/host/state").json()
+    ok(st["stored"]["n"] == 5 and not hp.request.get(B + "/api/host/media?status=hidden").json()["items"], "junk deleted for good, storage freed")
+    ok(gp.request.get(B + f"/m/{jid}/f").status == 404, "deleted file is gone")
+
     # ---------- phase 2: connect Google, copy everything across
     hp.goto(B + "/host"); hp.wait_for_selector("#desk:not([hidden])")
     hp.fill("#cid", "1234-abc.apps.googleusercontent.com"); hp.fill("#csec", "secretsecret1"); hp.click("#clientForm button")

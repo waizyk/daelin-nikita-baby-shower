@@ -428,9 +428,27 @@ async function route(req, env) {
   if (p === "/api/host/media" && M === "GET") {
     const status = ["pending", "approved", "hidden"].includes(url.searchParams.get("status")) ? url.searchParams.get("status") : "pending";
     const { results } = await env.DB.prepare(
-      "SELECT id, kind, guest, message, w, h, ready, created, size, name FROM media WHERE status = ? ORDER BY created DESC LIMIT 1000")
+      "SELECT id, kind, guest, message, w, h, ready, created, size, name, store FROM media WHERE status = ? ORDER BY created DESC LIMIT 1000")
       .bind(status).all();
-    return json({ items: results.map(r => ({ ...publicItem(r), size: r.size, name: r.name })) });
+    return json({ items: results.map(r => ({ ...publicItem(r), size: r.size, name: r.name, store: r.store })) });
+  }
+  // Delete for good: only hidden items still kept on the website (frees the free storage).
+  // Items already in Google Photos stay there; hiding is the only option for those.
+  if (p === "/api/host/delete" && M === "POST") {
+    requireXHR(req);
+    const { id } = await readJSON(req);
+    const item = /^[a-f0-9]{24}$/.test(id || "") &&
+      await env.DB.prepare("SELECT * FROM media WHERE id = ?").bind(id).first();
+    if (!item) return bad("Not found.", 404);
+    if (item.status !== "hidden") return bad("Hide it first, then delete.", 409);
+    if (item.store !== "kv") return bad("This one is already in Google Photos. Delete it there.", 409);
+    const n = Math.ceil(item.size / item.chunk);
+    for (let i = 0; i < n; i++) await env.MEDIA.delete(kvKey(item.base_url, i));
+    await env.DB.batch([
+      env.DB.prepare("DELETE FROM media WHERE id = ?").bind(id),
+      env.DB.prepare("DELETE FROM uploads WHERE media_id = ?").bind(id),
+    ]);
+    return json({ ok: true });
   }
   if (p === "/api/host/media" && M === "POST") {
     requireXHR(req);

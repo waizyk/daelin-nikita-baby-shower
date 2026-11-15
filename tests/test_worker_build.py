@@ -65,6 +65,6 @@ def test_uploads_work_before_google_is_connected(built):
     assert "isn't open" not in up
     assert "makeThumb" in up and "shrink(" in up
     host = read(built, "host.html")
-    assert 'id="moveBtn"' in host and "/api/host/migrate" in host
+    assert 'id="moveBtn"' in host and "/api/host/migrate" in host and "/api/host/delete" in host
     toml = open(os.path.join(ROOT, "worker", "wrangler.toml"), encoding="utf-8").read()
     assert 'binding = "MEDIA"' in toml and "REPLACE_WITH_KV_ID" in toml

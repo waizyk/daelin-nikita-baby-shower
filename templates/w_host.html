@@ -106,7 +106,7 @@
           <ul class="small" style="margin:0;padding-left:1.1rem">
             <li>Everything guests send is kept, even if you hide it here. Once Google Photos is connected, new uploads go straight into the album, and the "Copy to Google Photos" button moves the ones kept on the website.</li>
             <li>Until then, the website keeps them (up to about 900 MB; big photos are resized to 2560 px, and videos can be up to 150 MB each).</li>
-            <li>Hiding only removes it from this website's scrapbook.</li>
+            <li>Hiding only removes it from this website's scrapbook. Hidden items still kept on the website can be deleted for good from the Hidden tab.</li>
             <li>Photos sent to the <a href="{{ drive_url }}" target="_blank" rel="noopener">Drive folder</a> need adding to the album by hand.</li>
             <li>The QR sign to print is at <a href="{{ url_for('sign') }}">/sign</a>.</li>
           </ul>
@@ -193,6 +193,15 @@
       if (tab !== 'approved') add('✓ Approve', 'yes', 'approved');
       if (tab !== 'hidden') add('Hide', 'no', 'hidden');
       if (tab === 'hidden') add('Back to waiting', '', 'pending');
+      if (tab === 'hidden' && it.store === 'kv') {
+        const d = document.createElement('button'); d.className = 'no'; d.textContent = 'Delete';
+        d.onclick = async () => {
+          if (!confirm('Delete this for good? It can\'t be brought back.')) return;
+          try { await api('/api/host/delete', { method: 'POST', body: JSON.stringify({ id: it.id }) }); await boot(); }
+          catch (e) { window.toast(e.message); }
+        };
+        acts.append(d);
+      }
       grid.append(el);
     });
   }
