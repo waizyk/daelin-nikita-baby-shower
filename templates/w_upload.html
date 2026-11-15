@@ -13,11 +13,11 @@
       <span class="chapter">In Which You Add Your Photographs</span>
       <h2>Add your photos &amp; videos</h2>
       <p>Thank you for being part of {{ EVENT.parents }}'s day. Pop your pictures and little videos in below.
-        They go straight into the family's album, and a host adds them to the scrapbook.</p>
+        They're saved for the family, and a host adds them to the scrapbook.</p>
     </div>
 
     <div class="note warn" id="closed" hidden style="margin-bottom:1.2rem">
-      <strong>The album isn't open just yet.</strong> Please use the Google Drive link below for now.
+      <strong>Uploads are paused for a moment.</strong> Please use the Google Drive link below for now.
       The hosts will move everything into the album.
     </div>
 
@@ -59,7 +59,7 @@
     </div>
 
     <p class="small muted center" style="margin-top:1.2rem">
-      Photos and videos are saved, at full quality, to {{ EVENT.parents }}'s private Google Photos album.
+      Everything you send is kept privately for {{ EVENT.parents }} and ends up in their Google Photos album.
       Only pictures a host approves appear on this website.
     </p>
 
@@ -75,11 +75,59 @@
   const bar = $('progress'), barI = bar.querySelector('i'), ptext = $('progressText'), result = $('result');
   const MAX = {{ max_files }};
   const VID = /\.(mp4|mov|m4v|3gp|webm|avi|mkv|mts)$/i, IMG = /\.(jpe?g|png|gif|webp|heic|heif|avif|bmp|tiff?|dng)$/i;
-  let files = [], busy = false;
+  let files = [], busy = false, mode = null;
 
   fetch('/api/status').then(r => r.json()).then(s => {
+    mode = s.mode;
     if (!s.accepting) { $('closed').hidden = false; btn.disabled = true; drop.classList.add('off'); }
   }).catch(() => {});
+
+  // Small preview picture for the scrapbook (works for photos and most phone videos).
+  async function makeThumb(f) {
+    let url = null, v = null, src = null;
+    try {
+      let w, h;
+      if (isVideo(f)) {
+        v = document.createElement('video');
+        url = URL.createObjectURL(f);
+        v.muted = true; v.playsInline = true; v.preload = 'auto'; v.src = url;
+        await new Promise((res, rej) => { v.onloadeddata = res; v.onerror = rej; setTimeout(rej, 8000); });
+        v.currentTime = Math.min(1, (v.duration || 2) / 3);
+        await new Promise(res => { v.onseeked = res; setTimeout(res, 3000); });
+        src = v; w = v.videoWidth; h = v.videoHeight;
+      } else {
+        src = await createImageBitmap(f); w = src.width; h = src.height;
+      }
+      if (!w || !h) return null;
+      const k = Math.min(1, 540 / Math.max(w, h));
+      const c = document.createElement('canvas');
+      c.width = Math.round(w * k); c.height = Math.round(h * k);
+      c.getContext('2d').drawImage(src, 0, 0, c.width, c.height);
+      let q = .74, out = c.toDataURL('image/jpeg', q);
+      while (out.length > 130000 && q > .3) { q -= .12; out = c.toDataURL('image/jpeg', q); }
+      return { thumb: out.length < 140000 ? out : null, w, h };
+    } catch (_) { return null; }
+    finally {                                    // free the decoded video/photo straight away (phones are tight on memory)
+      if (v) { v.removeAttribute('src'); v.load(); }
+      if (url) URL.revokeObjectURL(url);
+      if (src && src.close) src.close();
+    }
+  }
+  // While photos are kept on the website (before Google Photos is connected), big photos are
+  // resized to 2560 px so the free storage holds many more of them.
+  async function shrink(f) {
+    if (mode !== 'kv' || isVideo(f) || f.size < 1.5e6 || /gif$/i.test(f.type)) return f;
+    try {
+      const bmp = await createImageBitmap(f);
+      const k = Math.min(1, 2560 / Math.max(bmp.width, bmp.height));
+      const c = document.createElement('canvas');
+      c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+      c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height); bmp.close();
+      const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', .86));
+      if (!blob || blob.size >= f.size) return f;
+      return new File([blob], f.name.replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' });
+    } catch (_) { return f; }
+  }
 
   const isVideo = f => f.type.startsWith('video/') || (!f.type && VID.test(f.name));
   const ok = f => f.type.startsWith('image/') || f.type.startsWith('video/') || IMG.test(f.name) || VID.test(f.name);
@@ -164,12 +212,15 @@
     ptext.textContent = label + ' · ' + pct + '%';
   }
 
-  async function uploadOne(f, i, guest, message) {
+  async function uploadOne(orig, i, guest, message) {
     const mark = s => { const t = $('f' + i); if (t) t.dataset.state = s; };
     mark('up');
+    const th = await makeThumb(orig);
+    const f = await shrink(orig);
+    totalBytes -= orig.size - f.size;
     const start = await api('/api/upload/start', {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ name: f.name, size: f.size, type: f.type, guest, message }),
+      body: JSON.stringify({ name: f.name, size: f.size, type: f.type, guest, message, ...(th || {}) }),
     });
     let offset = 0, tries = 0;
     const label = `Sending ${i + 1} of ${files.length}${f.size > 20e6 ? ' (' + mb(f.size) + ')' : ''}`;
@@ -189,6 +240,7 @@
     }
     mark('done');
     doneBytes += f.size;
+    return f.size;
   }
 
   form.addEventListener('submit', async e => {

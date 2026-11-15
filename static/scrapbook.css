@@ -41,6 +41,7 @@
 .snap.developing .pic{min-height:150px;line-height:1.4}
 .snap.developing .pic::after{content:"still developing… 🎞️";position:absolute;inset:0;display:grid;place-items:center;
   font-family:var(--hand);font-size:1.1rem;color:var(--ink-soft)}
+.snap.nothumb .pic{min-height:170px;background:radial-gradient(circle at 50% 45%,#4A3B2A,#241B12)}
 .snap.new{animation:dropin .7s cubic-bezier(.2,1.4,.4,1) both}
 .snap.new::after{content:"New!";position:absolute;right:-10px;top:-12px;z-index:3;background:var(--blush-deep);color:#fff;
   font:1rem/1 var(--hand);padding:.35rem .55rem;border-radius:50%;transform:rotate(12deg)}

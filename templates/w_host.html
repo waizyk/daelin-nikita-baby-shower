@@ -49,6 +49,7 @@
       <div class="card" id="connect">
         <h3 style="margin-top:0">Google Photos album</h3>
         <p id="connState"></p>
+        <p class="small" id="storeState" hidden></p>
 
         <div id="clientBox" hidden>
           <p class="small">Step 1 (admin, once). Paste the Google OAuth client from Google Cloud. The redirect URI to register is
@@ -64,6 +65,7 @@
           <a class="btn btn-primary btn-sm" id="connectBtn" href="/auth/google" hidden>Connect Google Photos</a>
           <a class="btn btn-ghost btn-sm" id="albumBtn" href="#" target="_blank" rel="noopener" hidden>Open the album in Google Photos</a>
           <button class="btn btn-ghost btn-sm" id="pauseBtn" type="button" hidden></button>
+          <button class="btn btn-sage btn-sm" id="moveBtn" type="button" hidden></button>
         </div>
         <details style="margin-top:.8rem" id="connectHelp" hidden>
           <summary class="small"><strong>What happens when you tap Connect?</strong></summary>
@@ -102,7 +104,8 @@
         <div class="card">
           <h3 style="margin-top:0">Good to know</h3>
           <ul class="small" style="margin:0;padding-left:1.1rem">
-            <li>Everything guests send is saved in the Google Photos album at full quality, even if you hide it here.</li>
+            <li>Everything guests send is kept, even if you hide it here. Once Google Photos is connected, new uploads go straight into the album, and the "Copy to Google Photos" button moves the ones kept on the website.</li>
+            <li>Until then, the website keeps them (up to about 900 MB; big photos are resized to 2560 px, and videos can be up to 150 MB each).</li>
             <li>Hiding only removes it from this website's scrapbook.</li>
             <li>Photos sent to the <a href="{{ drive_url }}" target="_blank" rel="noopener">Drive folder</a> need adding to the album by hand.</li>
             <li>The QR sign to print is at <a href="{{ url_for('sign') }}">/sign</a>.</li>
@@ -144,18 +147,26 @@
     $('login').hidden = !!state.role; $('desk').hidden = !state.role;
     if (!state.role) { $('code').focus(); return; }
     const s = state;
+    const paused = s.paused ? ' Uploads are <strong>paused</strong>.' : '';
     $('connState').innerHTML = s.connected
-      ? `<span class="status-dot on"></span><strong>Connected.</strong> Uploads go straight into the album${s.paused ? ' (uploads are <strong>paused</strong>)' : ''}.`
-      : s.needs_reconnect ? '<span class="status-dot"></span><strong>Google asked us to reconnect.</strong> Tap Connect and sign in with the parents\' account again.'
-      : s.has_client ? '<span class="status-dot"></span><strong>Almost there.</strong> Step 2: tap Connect and sign in with the parents\' Google account.'
-      : '<span class="status-dot"></span><strong>Not set up yet.</strong> ' + (s.role === 'admin' ? 'Start with step 1 below.' : 'The site admin (Ace) needs to do step 1 first.');
+      ? `<span class="status-dot on"></span><strong>Connected.</strong> Uploads go straight into the Google Photos album.${paused}`
+      : `<span class="status-dot on"></span><strong>Guests can upload.</strong> Until Google Photos is connected, uploads are kept safely on this website.${paused} `
+        + (s.needs_reconnect ? 'Google asked us to reconnect: tap Connect and sign in with the parents\' account again.'
+          : s.has_client ? 'To also save them to Google Photos, tap Connect and sign in with the parents\' Google account.'
+          : s.role === 'admin' ? 'To also save them to Google Photos, start with step 1 below.' : '');
+    const st = s.stored || { n: 0, bytes: 0, budget: 1 };
+    $('storeState').hidden = !st.n;
+    $('storeState').textContent = `${st.n} item${st.n === 1 ? '' : 's'} kept on the website · ${(st.bytes / 1048576).toFixed(0)} MB of ${(st.budget / 1048576).toFixed(0)} MB used`
+      + (s.connected ? '' : ' · they move into Google Photos once it\'s connected');
+    $('moveBtn').hidden = !(s.connected && st.n);
+    $('moveBtn').textContent = `Copy ${st.n} to Google Photos`;
     $('clientBox').hidden = !(s.role === 'admin' && !s.connected);
     $('redir').textContent = s.redirect_uri;
     $('connectBtn').hidden = !s.has_client || (s.connected && !s.needs_reconnect);
     $('connectHelp').hidden = $('connectBtn').hidden;
     $('connectBtn').textContent = s.needs_reconnect ? 'Reconnect Google Photos' : 'Connect Google Photos';
     $('albumBtn').hidden = !s.album_url; $('albumBtn').href = s.album_url || '#';
-    $('pauseBtn').hidden = !s.connected; $('pauseBtn').textContent = s.paused ? '▶ Resume uploads' : '⏸ Pause uploads';
+    $('pauseBtn').hidden = false; $('pauseBtn').textContent = s.paused ? '▶ Resume uploads' : '⏸ Pause uploads';
     $('pinState').textContent = s.has_pin ? 'A PIN is set. Saving a new one signs other hosts out.' : 'No PIN yet. Set one and share it with the other hosts.';
     for (const k of ['pending', 'approved', 'hidden']) $('c-' + k).textContent = '(' + s.counts[k] + ')';
     await list();
@@ -226,6 +237,18 @@
     catch (err) { window.toast(err.message); }
   };
   $('pauseBtn').onclick = async () => { await api('/api/host/pause', { method: 'POST', body: JSON.stringify({ paused: !state.paused }) }); boot(); };
+  $('moveBtn').onclick = async () => {
+    const b = $('moveBtn'); b.disabled = true;
+    try {
+      for (let guard = 0; guard < 2000; guard++) {
+        const d = await api('/api/host/migrate', { method: 'POST', body: '{}' });
+        b.textContent = d.left ? `Copying… ${d.left} to go` : 'All copied ✓';
+        if (!d.left || !d.moved) break;
+      }
+      window.toast('Everything is in Google Photos now.');
+    } catch (e) { window.toast(e.message + ' Tap the button to carry on.'); }
+    b.disabled = false; boot();
+  };
   $('logoutBtn').onclick = async () => { await api('/api/host/logout', { method: 'POST' }); boot(); };
   $('redir').onclick = () => navigator.clipboard?.writeText($('redir').textContent).then(() => window.toast('Copied'));
   boot().catch(e => window.toast(e.message));

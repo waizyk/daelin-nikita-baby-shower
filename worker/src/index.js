@@ -46,12 +46,40 @@ const SCHEMA = [
   "CREATE TABLE IF NOT EXISTS hits (k TEXT NOT NULL, ts INTEGER NOT NULL)",
   "CREATE INDEX IF NOT EXISTS hits_k ON hits(k, ts)",
 ];
+// Columns added after the first deploy (ALTER is a no-op error if they already exist).
+const COLUMNS = {
+  media: ["store TEXT NOT NULL DEFAULT 'google'", "chunk INTEGER", "thumb TEXT"],
+  uploads: ["store TEXT NOT NULL DEFAULT 'google'", "chunk INTEGER", "got INTEGER NOT NULL DEFAULT 0", "thumb TEXT", "w INTEGER", "h INTEGER"],
+};
 let schemaReady = false;
 async function ensureSchema(env) {
   if (schemaReady) return;
   await env.DB.batch(SCHEMA.map(s => env.DB.prepare(s)));
+  for (const [table, cols] of Object.entries(COLUMNS)) {
+    const { results } = await env.DB.prepare(`PRAGMA table_info(${table})`).all();
+    const have = new Set(results.map(r => r.name));
+    for (const c of cols) if (!have.has(c.split(" ")[0])) await env.DB.prepare(`ALTER TABLE ${table} ADD COLUMN ${c}`).run();
+  }
   schemaReady = true;
 }
+
+// Where new uploads go: Google Photos once connected, otherwise the site's own Cloudflare storage
+// (KV, free tier 1 GB). Stored items are copied into Google Photos from the host desk later.
+async function uploadMode(env) {
+  const s = await getS(env, "refresh_token", "album_id", "needs_reconnect", "paused");
+  if (s.paused) return { mode: null, why: "paused" };
+  if (s.refresh_token && s.album_id && !s.needs_reconnect) return { mode: "google" };
+  if (!env.MEDIA) return { mode: null, why: "closed" };
+  return { mode: "kv" };
+}
+async function kvUsage(env) {
+  const r = await env.DB.prepare(
+    "SELECT COALESCE(SUM(size),0) AS bytes, COUNT(*) AS n FROM media WHERE store = 'kv'").first();
+  const p = await env.DB.prepare(
+    "SELECT COALESCE(SUM(size),0) AS bytes FROM uploads WHERE store = 'kv' AND media_id IS NULL AND created > ?").bind(now() - 3600).first();
+  return { bytes: r.bytes + p.bytes, n: r.n, budget: +g(env, "KV_BUDGET_MB", "900") * 1024 * 1024 };
+}
+const kvKey = (uploadId, i) => `m:${uploadId}:${i}`;
 
 async function getS(env, ...keys) {
   const { results } = await env.DB.prepare(
@@ -229,8 +257,8 @@ async function route(req, env) {
     const c = await env.DB.prepare("SELECT kind, COUNT(*) AS n FROM media WHERE status = 'approved' GROUP BY kind").all();
     const counts = { photo: 0, video: 0 };
     for (const r of c.results) counts[r.kind] = r.n;
-    const connected = !!(s.refresh_token && s.album_id && !s.needs_reconnect);
-    return json({ accepting: connected && !s.paused, counts, chunk: LIMITS.chunk });
+    const { mode } = await uploadMode(env);
+    return json({ accepting: !!mode, mode, counts });
   }
 
   if (p === "/api/photos" && M === "GET") {
@@ -248,16 +276,31 @@ async function route(req, env) {
     const kind = kindOf(b.type, name);
     if (!kind) return bad("Only photos and videos can go in the album.");
     if (size <= 0) return bad("That file looks empty.");
-    if (size > LIMITS[kind]) return bad(kind === "video"
-      ? "That video is over 2 GB — please trim it, or use the Google Drive link below."
-      : "That photo is over 200 MB, which is too big for the album.", 413);
-    const s = await getS(env, "refresh_token", "album_id", "needs_reconnect", "paused");
-    if (!s.refresh_token || !s.album_id || s.needs_reconnect || s.paused)
-      return bad("The album isn't taking uploads right now — please use the Google Drive link below.", 503);
+    const { mode } = await uploadMode(env);
+    if (!mode) return bad("The album isn't taking uploads right now. Please use the Google Drive link below.", 503);
+    const max = mode === "kv" ? LIMITS["kv_" + kind] : LIMITS[kind];
+    if (size > max) return bad(kind === "video"
+      ? `That video is over ${Math.round(max / 1048576)} MB. Please trim it, or use the Google Drive link below.`
+      : "That photo is too big for the album.", 413);
     if (await limited(env, "start:" + ip(req), LIMITS.startsPerHour, 3600))
       return bad("That's a lot of uploads in one go! Give it a few minutes and try again.", 429);
 
     const mime = mimeFor(b.type, name, kind);
+    const thumb = typeof b.thumb === "string" && /^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(b.thumb) && b.thumb.length < 140000
+      ? b.thumb.slice(23) : null;
+    const dims = [Math.floor(+b.w) || null, Math.floor(+b.h) || null];
+    const id = randomId();
+    if (mode === "kv") {
+      const use = await kvUsage(env);
+      if (use.bytes + size > use.budget)
+        return bad("The website's photo storage is full. Please use the Google Drive link below.", 507);
+      await env.DB.prepare(
+        `INSERT INTO uploads (id, url, size, mime, kind, name, guest, message, ip, created, store, chunk, thumb, w, h)
+         VALUES (?,?,?,?,?,?,?,?,?,?,'kv',?,?,?,?)`)
+        .bind(id, "", size, mime, kind, name, clean(b.guest, 60), clean(b.message, 300), ip(req), now(),
+              LIMITS.kvChunk, thumb, dims[0], dims[1]).run();
+      return json({ id, chunk: LIMITS.kvChunk, mode });
+    }
     const tok = await accessToken(env);
     const r = await fetch(g(env, "PHOTOS_API", PHOTOS_API) + "/v1/uploads", {
       method: "POST",
@@ -274,11 +317,10 @@ async function route(req, env) {
     if (!r.ok || !upUrl) throw new HttpError(502, "Google Photos didn't accept the upload — please try again.");
     const gran = +r.headers.get("x-goog-upload-chunk-granularity") || 262144;
     const chunk = Math.max(gran, Math.floor(LIMITS.chunk / gran) * gran);
-    const id = randomId();
     await env.DB.prepare(
-      "INSERT INTO uploads (id, url, size, mime, kind, name, guest, message, ip, created) VALUES (?,?,?,?,?,?,?,?,?,?)")
-      .bind(id, upUrl, size, mime, kind, name, clean(b.guest, 60), clean(b.message, 300), ip(req), now()).run();
-    return json({ id, chunk });
+      "INSERT INTO uploads (id, url, size, mime, kind, name, guest, message, ip, created, thumb, w, h) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)")
+      .bind(id, upUrl, size, mime, kind, name, clean(b.guest, 60), clean(b.message, 300), ip(req), now(), thumb, dims[0], dims[1]).run();
+    return json({ id, chunk, mode });
   }
 
   let m;
@@ -286,6 +328,8 @@ async function route(req, env) {
     const up = await env.DB.prepare("SELECT * FROM uploads WHERE id = ?").bind(m[1]).first();
     if (!up || up.created < now() - 86400) return bad("This upload expired — please add the file again.", 410);
     if (up.media_id) return json({ ok: true, done: true, received: up.size });
+
+    if (up.store === "kv") return kvChunk(req, env, url, up, M);
 
     if (M === "GET") {                                   // resume: how much did Google get?
       const r = await fetch(up.url, { method: "POST", body: "", headers: { "x-goog-upload-command": "query" } });
@@ -314,8 +358,19 @@ async function route(req, env) {
   // ---- media (served from Google Photos via short-lived redirects)
   if ((m = p.match(/^\/m\/([a-f0-9]{24})\/(t|f|v|d)$/)) && M === "GET") {
     const item = await env.DB.prepare("SELECT * FROM media WHERE id = ?").bind(m[1]).first();
-    if (!item || !item.gp_id) return new Response("Not found", { status: 404 });
+    if (!item) return new Response("Not found", { status: 404 });
     if (item.status !== "approved" && !(await hostRole(req, env))) return new Response("Not found", { status: 404 });
+    const priv = item.status === "approved" ? "public, max-age=86400" : "private, no-store";
+    if (m[2] === "t" && item.thumb) {
+      const bin = atob(item.thumb), bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      return new Response(bytes, { headers: { "content-type": "image/jpeg", "cache-control": priv } });
+    }
+    if (item.store === "kv") {
+      if (m[2] === "t") return new Response("No preview", { status: 404 });
+      return serveKV(req, env, item, m[2] === "d", priv);
+    }
+    if (!item.gp_id) return new Response("Not found", { status: 404 });
     let base = item.base_exp > now() + 600 ? { base_url: item.base_url, ready: item.ready } : await refreshBase(env, item);
     if (!base || !base.base_url) return new Response("Not found", { status: 404 });
     if (item.kind === "video" && !base.ready && m[2] !== "t")
@@ -363,6 +418,7 @@ async function route(req, env) {
       album_url: s.album_url || "",
       connected_at: s.connected_at ? +s.connected_at : null,
       has_pin: !!s.pin_hash,
+      stored: await kvUsage(env),
       paused: !!s.paused,
       redirect_uri: url.origin + "/auth/callback",
     });
@@ -384,6 +440,15 @@ async function route(req, env) {
     const st = env.DB.prepare("UPDATE media SET status = ? WHERE id = ?");
     await env.DB.batch(ids.filter(i => /^[a-f0-9]{24}$/.test(i)).map(i => st.bind(status, i)));
     return json({ ok: true });
+  }
+  if (p === "/api/host/migrate" && M === "POST") {
+    requireXHR(req);
+    const { mode } = await uploadMode(env);
+    if (mode !== "google") return bad("Connect Google Photos first.", 409);
+    const item = await env.DB.prepare("SELECT * FROM media WHERE store = 'kv' ORDER BY created LIMIT 1").first();
+    if (item) await migrateOne(env, item);
+    const left = await env.DB.prepare("SELECT COUNT(*) AS n FROM media WHERE store = 'kv'").first();
+    return json({ ok: true, moved: item ? 1 : 0, left: left.n });
   }
   if (p === "/api/host/pin" && M === "POST") {
     requireXHR(req);
@@ -464,6 +529,126 @@ async function route(req, env) {
   return bad("Not found.", 404);
 }
 
+// ---------------------------------------------------------------- site storage (KV)
+async function kvChunk(req, env, url, up, M) {
+  if (M === "GET") return json({ received: up.got });
+  if (M !== "PUT") return bad("Method not allowed.", 405);
+  requireXHR(req);
+  const offset = Math.floor(+url.searchParams.get("offset") || 0);
+  const buf = await req.arrayBuffer();
+  const idx = offset / up.chunk;
+  const expect = Math.min(up.chunk, up.size - offset);
+  if (!Number.isInteger(idx) || offset < 0 || offset >= up.size || buf.byteLength !== expect) return bad("Bad chunk.");
+  try {
+    await env.MEDIA.put(kvKey(up.id, idx), buf);
+  } catch (e) {
+    console.error("kv put", e && e.message);
+    throw new HttpError(507, "The website's photo storage is full for today. Please use the Google Drive link below.");
+  }
+  const got = offset + buf.byteLength;
+  await env.DB.prepare("UPDATE uploads SET got = MAX(got, ?) WHERE id = ?").bind(got, up.id).run();
+  if (got < up.size) return json({ ok: true, received: got });
+
+  const id = randomId();
+  const status = g(env, "AUTO_APPROVE", "") === "1" ? "approved" : "pending";
+  await env.DB.batch([
+    env.DB.prepare(`INSERT INTO media (id, gp_id, kind, mime, name, guest, message, status, created, w, h, ready, size, store, chunk, thumb, base_url)
+                    VALUES (?,NULL,?,?,?,?,?,?,?,?,?,1,?,'kv',?,?,?)`)
+      .bind(id, up.kind, up.mime, up.name, up.guest || "", up.message || "", status, now(), up.w, up.h, up.size, up.chunk, up.thumb, up.id),
+    env.DB.prepare("UPDATE uploads SET media_id = ? WHERE id = ?").bind(id, up.id),
+  ]);
+  return json({ ok: true, done: true, status });
+}
+
+// Serve a stored file, with byte ranges (iPhones need them to play video).
+async function serveKV(req, env, item, download, cacheControl) {
+  const size = item.size, chunk = item.chunk, key = i => kvKey(item.base_url, i);  // base_url holds the upload id
+  const n = Math.ceil(size / chunk);
+  const head = {
+    "content-type": item.mime || "application/octet-stream", "accept-ranges": "bytes", "cache-control": cacheControl,
+    ...(download ? { "content-disposition": `attachment; filename="${(item.name || "photo").replace(/[^\w.\- ]+/g, "_")}"` } : {}),
+  };
+  const range = (req.headers.get("range") || "").match(/^bytes=(\d*)-(\d*)$/);
+  if (range && (range[1] || range[2])) {
+    let start, end;
+    if (range[1] === "") { start = Math.max(0, size - +range[2]); end = size - 1; }
+    else { start = +range[1]; end = range[2] === "" ? size - 1 : Math.min(+range[2], size - 1); }
+    if (start >= size || start > end) return new Response(null, { status: 416, headers: { "content-range": `bytes */${size}` } });
+    const i = Math.floor(start / chunk);
+    end = Math.min(end, (i + 1) * chunk - 1);                    // one stored piece per response
+    const buf = await env.MEDIA.get(key(i), "arrayBuffer");
+    if (!buf) return new Response("Not found", { status: 404 });
+    const part = buf.slice(start - i * chunk, end - i * chunk + 1);
+    return new Response(part, { status: 206, headers: { ...head, "content-range": `bytes ${start}-${end}/${size}`, "content-length": String(part.byteLength) } });
+  }
+  if (n === 1) {
+    const st = await env.MEDIA.get(key(0), "stream");
+    if (!st) return new Response("Not found", { status: 404 });
+    return new Response(st, { headers: { ...head, "content-length": String(size) } });
+  }
+  let i = 0;
+  const body = new ReadableStream({
+    async pull(ctl) {
+      if (i >= n) return ctl.close();
+      const b = await env.MEDIA.get(key(i++), "arrayBuffer");
+      if (!b) return ctl.error(new Error("missing piece"));
+      ctl.enqueue(new Uint8Array(b));
+    },
+  });
+  return new Response(body, { headers: { ...head, "content-length": String(size) } });
+}
+
+// Copy one stored item into the Google Photos album, then free the site storage.
+async function migrateOne(env, item) {
+  const tok = await accessToken(env);
+  const r = await fetch(g(env, "PHOTOS_API", PHOTOS_API) + "/v1/uploads", {
+    method: "POST", body: "",
+    headers: {
+      authorization: `Bearer ${tok}`, "x-goog-upload-command": "start", "x-goog-upload-content-type": item.mime,
+      "x-goog-upload-protocol": "resumable", "x-goog-upload-raw-size": String(item.size),
+    },
+  });
+  const upUrl = r.headers.get("x-goog-upload-url");
+  if (!r.ok || !upUrl) throw new HttpError(502, "Google Photos didn't accept the file. Try again in a minute.");
+  const n = Math.ceil(item.size / item.chunk);
+  let res;
+  for (let i = 0; i < n; i++) {
+    const buf = await env.MEDIA.get(kvKey(item.base_url, i), "arrayBuffer");
+    if (!buf) throw new HttpError(500, "A stored piece of " + item.name + " is missing.");
+    res = await fetch(upUrl, {
+      method: "POST", body: buf,
+      headers: { "x-goog-upload-command": i === n - 1 ? "upload, finalize" : "upload", "x-goog-upload-offset": String(i * item.chunk) },
+    });
+    if (!res.ok) throw new HttpError(502, "Google Photos dropped the upload. Try again.");
+  }
+  const uploadToken = (await res.text()).trim();
+  const created = await createMediaItem(env, item, uploadToken);
+  const keys = Array.from({ length: n }, (_, i) => kvKey(item.base_url, i));
+  await env.DB.prepare("UPDATE media SET gp_id = ?, store = 'google', base_url = NULL, base_exp = 0, ready = ? WHERE id = ?")
+    .bind(created.id, created.ready, item.id).run();
+  for (const k of keys) await env.MEDIA.delete(k);
+}
+
+async function createMediaItem(env, up, uploadToken) {
+  const desc = (up.guest ? `From ${up.guest}` : "From a guest") + (up.message ? ` — “${up.message}”` : "");
+  let { album_id } = await getS(env, "album_id");
+  const create = albumId => photos(env, "/v1/mediaItems:batchCreate", {
+    method: "POST",
+    body: JSON.stringify({
+      ...(albumId ? { albumId } : {}),
+      newMediaItems: [{ description: desc.slice(0, 1000), simpleMediaItem: { uploadToken, fileName: up.name } }],
+    }),
+  });
+  let d;
+  try { d = await create(album_id); }
+  catch (e) { album_id = await createAlbum(env); d = await create(album_id); }
+  const res = (d.newMediaItemResults || [])[0] || {};
+  const item = res.mediaItem;
+  if (!item || !item.id) throw new HttpError(502, (res.status && res.status.message) || "Google Photos couldn't save that file.");
+  const md = item.mediaMetadata || {};
+  return { id: item.id, md, ready: up.kind === "video" ? (md.video && md.video.status === "READY" ? 1 : 0) : 1 };
+}
+
 async function addToAlbum(env, up, uploadToken) {
   const desc = (up.guest ? `From ${up.guest}` : "From a guest") + (up.message ? ` — “${up.message}”` : "");
   let { album_id } = await getS(env, "album_id");
@@ -488,10 +673,10 @@ async function addToAlbum(env, up, uploadToken) {
   const status = g(env, "AUTO_APPROVE", "") === "1" ? "approved" : "pending";
   const ready = up.kind === "video" ? (md.video && md.video.status === "READY" ? 1 : 0) : 1;
   await env.DB.batch([
-    env.DB.prepare(`INSERT INTO media (id, gp_id, kind, mime, name, guest, message, status, created, w, h, ready, size)
-                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`)
+    env.DB.prepare(`INSERT INTO media (id, gp_id, kind, mime, name, guest, message, status, created, w, h, ready, size, thumb)
+                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
       .bind(id, item.id, up.kind, up.mime, up.name, up.guest || "", up.message || "", status, now(),
-            +md.width || null, +md.height || null, ready, up.size),
+            +md.width || up.w || null, +md.height || up.h || null, ready, up.size, up.thumb || null),
     env.DB.prepare("UPDATE uploads SET media_id = ?, url = '' WHERE id = ?").bind(id, up.id),
   ]);
   return { id, status };

@@ -4,6 +4,9 @@ export const LIMITS = {
   chunk: 8 * 1024 * 1024,          // multiple of Google's 256 KiB granularity
   photo: 200 * 1024 * 1024,        // Google Photos' own limit for photos
   video: 2 * 1024 * 1024 * 1024,   // 2 GB per video (10+ minutes of 4K phone video)
+  kvChunk: 20 * 1024 * 1024,       // site-storage pieces (KV values may be up to 25 MiB)
+  kv_photo: 60 * 1024 * 1024,      // while photos are kept on the site (before Google Photos is connected)
+  kv_video: 150 * 1024 * 1024,
   startsPerHour: 150,              // per IP: a whole camera roll is fine, a script is not
   loginsPer15m: 10,
 };

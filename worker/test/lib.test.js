@@ -32,3 +32,9 @@ test("chunk size suits Google's 256 KiB granularity and the Workers body limit",
 test("setup code hash matches wrangler.toml format", async () => {
   assert.match(await sha256("hunny"), /^[a-f0-9]{64}$/);
 });
+
+test("site storage pieces fit in one KV value, and caps are sane", () => {
+  assert.ok(LIMITS.kvChunk <= 25 * 1024 * 1024);
+  assert.ok(LIMITS.kv_video < LIMITS.video && LIMITS.kv_photo <= LIMITS.photo);
+  assert.ok(LIMITS.kv_video >= 100 * 1024 * 1024);
+});

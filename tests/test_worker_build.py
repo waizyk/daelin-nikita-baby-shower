@@ -57,3 +57,14 @@ def test_setup_code_never_committed():
     toml = open(os.path.join(ROOT, "worker", "wrangler.toml")).read()
     assert re.search(r'SETUP_HASH = "[a-f0-9]{64}"', toml)
     assert "hunny-" not in toml
+
+
+def test_uploads_work_before_google_is_connected(built):
+    """Guests can upload straight away: the site keeps files until Google Photos is connected."""
+    up = read(built, "upload.html")
+    assert "isn't open" not in up
+    assert "makeThumb" in up and "shrink(" in up
+    host = read(built, "host.html")
+    assert 'id="moveBtn"' in host and "/api/host/migrate" in host
+    toml = open(os.path.join(ROOT, "worker", "wrangler.toml"), encoding="utf-8").read()
+    assert 'binding = "MEDIA"' in toml and "REPLACE_WITH_KV_ID" in toml

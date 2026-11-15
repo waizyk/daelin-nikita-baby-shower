@@ -87,7 +87,7 @@
     img.alt = (it.kind === 'video' ? 'Video' : 'Photo') + ' from ' + who(it);
     if (it.w && it.h) { img.width = Math.min(720, it.w); img.height = Math.round(img.width * it.h / it.w); }
     img.src = `/m/${it.id}/t`;
-    img.onerror = () => { fig.classList.add('developing'); img.remove(); };
+    img.onerror = () => { fig.classList.add(it.kind === 'video' ? 'nothumb' : 'developing'); img.remove(); };
     b.append(img);
     if (it.kind === 'video') { const p = document.createElement('span'); p.className = 'play'; p.textContent = '▶'; b.append(p); }
     b.onclick = () => open(items.indexOf(it));

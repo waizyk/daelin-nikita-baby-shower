@@ -24,3 +24,9 @@ AUTO_APPROVE = ""
 # SHA-256 of the one-time setup code (the code itself is never committed).
 # The code opens the host desk as admin: paste the Google client, connect the album, set the hosts' PIN.
 SETUP_HASH = "2f7030da291dc0ff72eaff4a55e1db0d0b0aef1479a1f02ad52b5cb71222c271"
+
+# Site storage for uploads until Google Photos is connected (Workers KV, free tier: 1 GB, 1,000 writes/day).
+# The host desk copies everything into Google Photos once it's connected, and frees the space.
+[[kv_namespaces]]
+binding = "MEDIA"
+id = "REPLACE_WITH_KV_ID"
