@@ -305,7 +305,7 @@ def test_every_local_asset_resolves(client, path):
 
 def test_storybook_illustrations_present(client):
     html = client.get("/").get_data(as_text=True)
-    for img in ("hero.webp", "map.webp", "balloon.webp", "friends.webp"):
+    for img in ("hero-red.webp", "map.webp", "balloon-red.webp", "friends-red.webp"):
         assert f"/static/img/{img}" in html
     assert "In Which" in html and "100 Aker Wood" in html
 
