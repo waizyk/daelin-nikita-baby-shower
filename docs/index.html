@@ -9,6 +9,7 @@
 <meta name="theme-color" content="#FBF3E0">
 <meta name="robots" content="noindex, nofollow">
 <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="hunny-qr.css">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍯</text></svg>">
 </head>
 <body><div style="background:#fff6d6;border-bottom:1px solid #f1dc9a;color:#6b4e16;font:600 14px/1.4 system-ui,sans-serif;padding:.6rem 1rem;text-align:center">Preview only: the live photo site isn't up yet. Photos can go in the <a href="https://drive.google.com/drive/folders/1txOYJtkn1biaCc_c3_cRpNh6AzN9lUM4" target="_blank" rel="noopener">shared Drive folder</a> for now.</div>
@@ -265,11 +266,29 @@
             <a class="btn btn-ghost" href="photos.html">Browse the album</a>
           </div>
         </div>
-        <div style="text-align:center">
-          <div class="qr-frame">
-            <img src="qr.svg" alt="QR code linking to the photo upload page" width="170" height="170" style="width:170px;height:170px">
-          </div>
-          <p class="hand" style="margin:.8rem 0 0;font-size:1.15rem">point your camera here</p>
+        <div class="qr-pot">
+          
+<div class="hunny-qr">
+  <img class="pot" src="img/pot.webp" width="760" height="760" alt="">
+  <svg class="deco" viewBox="0 0 760 760" aria-hidden="true">
+    <!-- string from the bow down to the tag -->
+    <path d="M392 246 C 372 280, 404 300, 380 330" fill="none" stroke="#9C8058" stroke-width="5" stroke-linecap="round"/>
+    <path d="M392 246 C 372 280, 404 300, 380 330" fill="none" stroke="#D9C49A" stroke-width="2" stroke-dasharray="4 5" stroke-linecap="round"/>
+    <!-- bee flight trails -->
+    <path d="M150 78 C 110 100, 70 70, 52 118 S 90 190, 40 230" fill="none" stroke="#7B6650" stroke-width="2.4" stroke-dasharray="2 9" stroke-linecap="round"/>
+    <path d="M632 110 C 680 120, 720 90, 728 150 S 680 210, 724 262" fill="none" stroke="#7B6650" stroke-width="2.4" stroke-dasharray="2 9" stroke-linecap="round"/>
+  </svg>
+  <div class="tag">
+    <svg class="drip" viewBox="0 0 60 40" aria-hidden="true">
+      <path d="M0 0H60V4C55 4 54 5 53.5 8C53 12 53 22 49.5 22C46 22 46 12 45.5 8C45 5 42 4 32 4C24 4 23 5 22.5 7C22 9 22 13 19.5 13C17 13 17 9 16.5 7C16 5 12 4 0 4Z" fill="#E7AE45" stroke="#B57A1F" stroke-width="1"/>
+      <path d="M49.5 12v6" stroke="#FFF3CF" stroke-width="1.6" stroke-linecap="round"/>
+    </svg>
+    <span class="tag-title" aria-hidden="true">HUNNY</span>
+    <img src="qr-hunny.svg" alt="QR code linking to the photo upload page">
+  </div>
+</div>
+
+          <p class="hand" style="margin:-.4rem 0 0;font-size:1.15rem;text-align:center">point your camera at the hunny pot</p>
         </div>
       </div>
     </div>

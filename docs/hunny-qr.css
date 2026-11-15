@@ -1,0 +1,16 @@
+/* QR code dressed up as a pot of hunny (used on the home page and the printed sign) */
+.hunny-qr{position:relative;width:100%;aspect-ratio:1/1;margin:0 auto}
+.hunny-qr>.pot{position:absolute;inset:0;width:100%;height:100%}
+.hunny-qr>.deco{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+.hunny-qr>.tag{position:absolute;left:29.5%;top:41.5%;width:41%;
+  background:#FFFDF5;border:max(1px,.28cqw) solid rgba(75,58,38,.7);
+  border-radius:6% 6% 5% 5%/5% 5% 4% 4%;padding:3.2% 3.6% 3.6%;
+  box-shadow:.6cqw .9cqw 0 rgba(75,58,38,.22);transform:rotate(-2.5deg);transform-origin:50% 0;text-align:center;
+  container-type:inline-size}
+.hunny-qr{container-type:inline-size}
+.hunny-qr>.tag::before{content:"";position:absolute;left:50%;top:3.4%;width:5.5%;aspect-ratio:1;transform:translateX(-50%);
+  border-radius:50%;background:#F5E8C8;box-shadow:0 0 0 .9cqw #E7C98A,inset 0 0 0 .5cqw rgba(75,58,38,.45)}
+.hunny-qr .tag-title{display:block;font-family:"Pooh Hand","Bradley Hand","Comic Sans MS",cursive;color:#B57A1F;
+  font-size:13cqw;line-height:1;letter-spacing:.06em;margin:7% 0 2%}
+.hunny-qr .tag img{display:block;width:100%;height:auto;aspect-ratio:1/1}
+.hunny-qr .tag .drip{position:absolute;left:5%;top:-2%;width:26%;height:auto;overflow:visible}

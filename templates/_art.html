@@ -176,3 +176,26 @@
   </g>
 </svg>
 {% endmacro %}
+
+{# QR code as a hunny pot. qr = url of the QR svg, pot = url of the pot illustration #}
+{% macro hunny_qr(qr, pot, label='QR code: scan to add your photos') %}
+<div class="hunny-qr">
+  <img class="pot" src="{{ pot }}" width="760" height="760" alt="">
+  <svg class="deco" viewBox="0 0 760 760" aria-hidden="true">
+    <!-- string from the bow down to the tag -->
+    <path d="M392 246 C 372 280, 404 300, 380 330" fill="none" stroke="#9C8058" stroke-width="5" stroke-linecap="round"/>
+    <path d="M392 246 C 372 280, 404 300, 380 330" fill="none" stroke="#D9C49A" stroke-width="2" stroke-dasharray="4 5" stroke-linecap="round"/>
+    <!-- bee flight trails -->
+    <path d="M150 78 C 110 100, 70 70, 52 118 S 90 190, 40 230" fill="none" stroke="#7B6650" stroke-width="2.4" stroke-dasharray="2 9" stroke-linecap="round"/>
+    <path d="M632 110 C 680 120, 720 90, 728 150 S 680 210, 724 262" fill="none" stroke="#7B6650" stroke-width="2.4" stroke-dasharray="2 9" stroke-linecap="round"/>
+  </svg>
+  <div class="tag">
+    <svg class="drip" viewBox="0 0 60 40" aria-hidden="true">
+      <path d="M0 0H60V4C55 4 54 5 53.5 8C53 12 53 22 49.5 22C46 22 46 12 45.5 8C45 5 42 4 32 4C24 4 23 5 22.5 7C22 9 22 13 19.5 13C17 13 17 9 16.5 7C16 5 12 4 0 4Z" fill="#E7AE45" stroke="#B57A1F" stroke-width="1"/>
+      <path d="M49.5 12v6" stroke="#FFF3CF" stroke-width="1.6" stroke-linecap="round"/>
+    </svg>
+    <span class="tag-title" aria-hidden="true">HUNNY</span>
+    <img src="{{ qr }}" alt="{{ label }}">
+  </div>
+</div>
+{% endmacro %}

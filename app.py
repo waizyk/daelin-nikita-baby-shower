@@ -205,6 +205,44 @@ def qr_svg():
     return send_file(io.BytesIO(buf.getvalue()), mimetype="image/svg+xml")
 
 
+QR_INK = "#3A2914"   # dark honey-brown: high contrast on the cream tag
+
+
+def hunny_qr_svg(target):
+    """Storybook QR: rounded 'honeycomb' dots + soft finder eyes, error correction H."""
+    q = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_H, border=0)
+    q.add_data(target)
+    q.make(fit=True)
+    m = q.get_matrix()
+    n = len(m)
+
+    def finder(r, c):
+        return (r < 7 and c < 7) or (r < 7 and c >= n - 7) or (r >= n - 7 and c < 7)
+
+    dots = []
+    for r in range(n):
+        for c in range(n):
+            if m[r][c] and not finder(r, c):
+                dots.append(f"M{c + .5:g} {r + .07:g}a.43 .43 0 1 1 0 .86a.43 .43 0 1 1 0-.86z")
+    eyes = []
+    for fr, fc in ((0, 0), (0, n - 7), (n - 7, 0)):
+        eyes.append(
+            f'<path fill-rule="evenodd" d="M{fc + 1.9} {fr}h3.2a1.9 1.9 0 0 1 1.9 1.9v3.2a1.9 1.9 0 0 1-1.9 1.9h-3.2'
+            f'a1.9 1.9 0 0 1-1.9-1.9v-3.2a1.9 1.9 0 0 1 1.9-1.9z'
+            f'M{fc + 2.2} {fr + 1}h2.6a1.2 1.2 0 0 1 1.2 1.2v2.6a1.2 1.2 0 0 1-1.2 1.2h-2.6'
+            f'a1.2 1.2 0 0 1-1.2-1.2v-2.6a1.2 1.2 0 0 1 1.2-1.2z"/>'
+            f'<rect x="{fc + 2}" y="{fr + 2}" width="3" height="3" rx="1"/>')
+    pad = 2
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{-pad} {-pad} {n + 2 * pad} {n + 2 * pad}" '
+            f'shape-rendering="geometricPrecision"><g fill="{QR_INK}"><path d="{"".join(dots)}"/>'
+            f'{"".join(eyes)}</g></svg>')
+
+
+@app.route("/qr-hunny.svg")
+def qr_hunny():
+    return app.response_class(hunny_qr_svg(upload_url()), mimetype="image/svg+xml")
+
+
 @app.route("/qr.png")
 def qr_png():
     """Raster QR for printing."""

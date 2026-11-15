@@ -94,6 +94,33 @@ def test_qr_png(client):
     assert r.status_code == 200 and r.data[:8] == b"\x89PNG\r\n\x1a\n"
 
 
+def test_hunny_qr_svg(client):
+    r = client.get("/qr-hunny.svg")
+    assert r.status_code == 200 and r.mimetype == "image/svg+xml"
+    assert r.data.startswith(b"<svg") and A.QR_INK.encode() in r.data
+
+
+def test_hunny_qr_encodes_upload_url(monkeypatch):
+    """The decorated QR must carry exactly the same data as the plain one."""
+    import qrcode
+    monkeypatch.setattr(config, "PUBLIC_URL", "https://final.example")
+    with A.app.test_request_context():
+        target = A.upload_url()
+    q = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_H, border=0)
+    q.add_data(target); q.make(fit=True)
+    n = len(q.get_matrix())
+    svg = A.hunny_qr_svg(target)
+    assert f'viewBox="-2 -2 {n + 4} {n + 4}"' in svg
+    dark = sum(v for r, row in enumerate(q.get_matrix()) for c, v in enumerate(row)
+               if not ((r < 7 and c < 7) or (r < 7 and c >= n - 7) or (r >= n - 7 and c < 7)))
+    assert svg.count("a.43 .43 0 1 1 0 .86") == dark
+
+
+def test_sign_and_home_use_hunny_qr(client):
+    for path in ("/", "/sign"):
+        assert "/qr-hunny.svg" in client.get(path).get_data(as_text=True)
+
+
 def test_qr_follows_host(client):
     url = client.get("/api/qr-target", base_url="https://party.example").get_json()["url"]
     assert url == "https://party.example/upload"

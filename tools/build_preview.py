@@ -36,7 +36,8 @@ def main():
     live = LIVE_URL.rstrip("/")
     qr_target = live + "/upload" if live else config.EVENT["drive_url"]
     links = {"/": "./", "/photos": "photos.html", "/upload": "upload.html",
-             "/static/style.css": "style.css", "/qr.svg": "qr.svg"}
+             "/static/style.css": "style.css", "/qr.svg": "qr.svg",
+             "/qr-hunny.svg": "qr-hunny.svg"}
 
     def fix(match):
         attr, path = match.group(1), match.group(2)
@@ -80,6 +81,8 @@ def main():
                 box_size=12, border=2).save(buf)
     with open(os.path.join(DOCS, "qr.svg"), "wb") as f:
         f.write(buf.getvalue())
+    with open(os.path.join(DOCS, "qr-hunny.svg"), "w", encoding="utf-8") as f:
+        f.write(A.hunny_qr_svg(qr_target))
     with open(os.path.join(DOCS, "robots.txt"), "w") as f:
         f.write("User-agent: *\nDisallow: /\n")
     open(os.path.join(DOCS, ".nojekyll"), "w").close()

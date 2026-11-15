@@ -1,3 +1,4 @@
+{% import "_art.html" as art %}
 <!doctype html>
 <html lang="en">
 <head>
@@ -5,6 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>Printable sign — add your photos</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='hunny-qr.css') }}">
 <style>
   @font-face{font-family:"Fell";src:url("{{ url_for('static', filename='fonts/fell-english.woff2') }}") format("woff2")}
   @font-face{font-family:"Fell";font-style:italic;src:url("{{ url_for('static', filename='fonts/fell-english-italic.woff2') }}") format("woff2")}
@@ -42,7 +44,9 @@
   .how b{color:var(--honey-deep);font-weight:400}
   .url{margin:2.5mm 0 0;font-family:var(--hand);font-size:12pt;color:var(--ink-soft);word-break:break-all}
   .url code{font-family:inherit;background:var(--honey-pale);padding:.4mm 3mm;border-radius:2mm}
-  .friends{width:78mm;height:auto;margin-top:auto}
+  .friends{width:70mm;height:auto;margin-top:auto}
+  .potwrap{position:relative;width:162mm;margin:-2mm auto -6mm}
+  .potwrap .balloon{position:absolute;left:-14mm;top:-4mm;width:34mm;transform:rotate(-8deg)}
   .printbtn{
     position:fixed;top:16px;right:16px;background:var(--honey);color:#3A2914;border:2px solid var(--ink);
     padding:10px 20px;border-radius:14px 22px 16px 24px;font-size:17px;cursor:pointer;
@@ -66,10 +70,9 @@
   <h1>Share your <em>photographs</em></h1>
   <p class="sub">{{ EVENT.parents }} · {{ EVENT.date_long }}</p>
 
-  <img class="hero" src="{{ url_for('static', filename='img/hero.webp') }}" alt="">
-
-  <div class="qrbox">
-    <img src="{{ url_for('qr_png') }}" alt="QR code to the photo upload page">
+  <div class="potwrap">
+    <img class="balloon" src="{{ url_for('static', filename='img/balloon.webp') }}" alt="">
+    {{ art.hunny_qr(url_for('qr_hunny'), url_for('static', filename='img/pot.webp'), 'QR code to the photo upload page') }}
   </div>
 
   <p class="how">
